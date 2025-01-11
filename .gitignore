@@ -1,0 +1,35 @@
+reviewly_env/
+.env
+__pycache__
+# Node.js
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Vite
+dist/
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+.env 
+
+# Package
+package-lock.json
+package.json
+
+# TypeScript config files
+tsconfig.app.json
+tsconfig.node.json
+tsconfig.json
+
+# ESLint config
+eslint.config.js
+
+
+# Build directories
+build/

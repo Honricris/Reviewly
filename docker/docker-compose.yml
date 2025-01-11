@@ -1,0 +1,39 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: Reviewly
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../data/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+
+  backend:
+    build:
+      context: ../reviewly_backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/Reviewly
+      EDEN_API_TOKEN: ${EDEN_API_TOKEN}
+      EDEN_API_URL: ${EDEN_API_URL}
+    ports:
+      - "5000:5000"  
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ../reviewly_frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://127.0.0.1:5000
+    command: ["sh", "-c", "while ! curl -s -o /dev/null -w '%{http_code}' http://backend:5000/health | grep -q '200'; do echo 'Waiting for backend...'; sleep 10; done; npm run dev -- --host"]
+
+volumes:
+  postgres_data:
+

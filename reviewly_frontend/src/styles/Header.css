@@ -1,0 +1,35 @@
+.products-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.home-button {
+  display: flex;
+  align-items: center;
+}
+
+.home-button-image {
+  height: 40px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border-radius: 20px;
+  padding: 0 10px;
+}
+
+.home-button {
+  display: inline-block;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 5px;
+}
+
+.home-button-image {
+  width: 125px;
+  height: auto;
+}
