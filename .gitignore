@@ -16,11 +16,12 @@ dist/
 # TypeScript
 *.tsbuildinfo
 
+
+
+
 .env 
 
-# Package
-package-lock.json
-package.json
+
 
 # TypeScript config files
 tsconfig.app.json

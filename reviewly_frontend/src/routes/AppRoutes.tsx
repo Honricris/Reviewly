@@ -4,6 +4,7 @@ import Introduction from '../pages/Introduction';
 import ProductsMenu from '../pages/ProductsMenu';
 import ProductDetails from '../pages/ProductDetails';
 import NotFound from '../pages/NotFound';
+import React from 'react';
 
 const AppRoutes = () => {
   return (

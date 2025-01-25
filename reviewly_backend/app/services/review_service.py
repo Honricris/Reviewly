@@ -21,7 +21,16 @@ def get_reviews_by_product(product_id, limit=10, offset=0):
             .all()
         )
         print(f"Returning reviews: {reviews}, total_reviews: {total_reviews}")
-        return [review.to_dict() for review in reviews], total_reviews 
+        
+        # Convertir rating a float para evitar problemas con Decimal
+        reviews_dict = []
+        for review in reviews:
+            review_dict = review.to_dict()
+            # Asegurarse de que el rating es un float
+            review_dict['rating'] = float(review_dict['rating'])
+            reviews_dict.append(review_dict)
+
+        return reviews_dict, total_reviews 
     except Exception as e:
         print(f"Error fetching reviews for product {product_id}: {e}")
         return [], 0

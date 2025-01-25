@@ -1,89 +1,98 @@
-from flask import Blueprint, jsonify, request
+from flask_restx import Namespace, Resource, fields
 from app.services.product_service import (
-    get_all_products, 
-    get_product_by_id, 
-    create_product, 
-    update_product, 
-    delete_product
+    get_all_products, get_product_by_id, create_product, update_product, delete_product
 )
+from app.services.review_service import get_reviews_by_product
+from flask import request
 
-from app.services.review_service import (
-    get_reviews_by_product
-)
+api = Namespace('products', description='Product related operations')
 
+# Definir el esquema de Product para Swagger
+product_model = api.model('Product', {
+    'product_id': fields.Integer(description='Product ID', example=1),
+    'title': fields.String(required=True, description='Title of the product', example="Smartphone XYZ"),
+    'main_category': fields.String(required=True, description='Main category of the product', example="Electronics"),
+    'average_rating': fields.Float(description='Average rating of the product', example=4.5),
+    'rating_number': fields.Integer(required=True, description='Number of ratings', example=200),
+    'features': fields.Raw(description='List of product features', example={"color": "black", "size": "6 inches"}),
+    'description': fields.Raw(description='Description of the product', example={"short": "High-quality smartphone", "long": "This smartphone has all the latest features"}),
+    'price': fields.Float(description='Price of the product', example=599.99),
+    'resume_review': fields.String(description='Summary of product reviews', example="Great product, highly recommended."),
+    'images': fields.Raw(description='List of images', example=["image1.jpg", "image2.jpg"]),
+    'videos': fields.Raw(description='List of videos', example=["video1.mp4", "video2.mp4"]),
+    'store': fields.String(description='Store name', example="Amazon"),
+    'categories': fields.Raw(description='Categories of the product', example=["Smartphones", "Electronics"]),
+    'details': fields.Raw(description='Additional details of the product', example={"brand": "XYZ", "battery_life": "12 hours"}),
+    'parent_asin': fields.String(description='Parent ASIN if any', example="B08J6F174Z"),
+    'asin': fields.String(description='Amazon ASIN', example="B08R29V9FQ"),
+    'bought_together': fields.Raw(description='Products bought together', example=[{"asin": "B08V4V1N4F", "title": "Smartphone case"}]),
+    'amazon_link': fields.String(description='Amazon link of the product', example="https://www.amazon.com/dp/B08R29V9FQ"),
+    'created_at': fields.DateTime(description='Product creation time', example="2023-12-01T12:00:00Z")
+})
 
-bp = Blueprint('product_routes', __name__)
+@api.route('/')
+class ProductList(Resource):
+    @api.param('category', 'Category filter for products', type=str)
+    @api.param('limit', 'Number of products to return', type=int, default=10)
+    @api.param('page', 'Page number for pagination', type=int, default=1)
+    def get(self):
+        category = request.args.get('category')
+        limit = request.args.get('limit', type=int)
+        page = request.args.get('page', type=int)
+        products = get_all_products(category=category, limit=limit, page=page)
+        return products, 200
 
-# Listar productos
-@bp.route('/products', methods=['GET'])
-def get_products():
-    # Obtener los parámetros de la query string
-    category = request.args.get('category')  # Filtrar por categoría
-    limit = request.args.get('limit', type=int)  # Limitar el número de productos devueltos
-    page = request.args.get('page', type=int)  # Limitar el número de productos devueltos
+    @api.expect(product_model)
+    def post(self):
+        data = api.payload
+        product = create_product(data)
+        return product, 201
 
-    products = get_all_products(category=category, limit=limit, page = page)
-    
-    return jsonify(products), 200
+@api.route('/<int:id>')
+class Product(Resource):
+    @api.marshal_with(product_model)
+    def get(self, id):
+        product = get_product_by_id(id)
+        if not product:
+            return {"error": "Product not found"}, 404
+        return product, 200
 
-# Crear Productos
-@bp.route('/products', methods=['POST'])
-def post_product():
-    data = request.get_json()
-    product = create_product(data)
-    return jsonify(product), 201
+    @api.expect(product_model)
+    def put(self, id):
+        data = api.payload
+        product = update_product(id, data)
+        if not product:
+            return {"error": "Product not found"}, 404
+        return product, 200
 
-# Seleccionar un producto concreto
-@bp.route('/products/<int:id>', methods=['GET'])
-def get_product(id):
-    product = get_product_by_id(id)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-    return jsonify(product), 200
+    def delete(self, id):
+        success = delete_product(id)
+        if not success:
+            return {"error": "Product not found"}, 404
+        return {"message": "Product deleted"}, 200
 
-# Actualizar un producto
-@bp.route('/products/<int:id>', methods=['PUT'])
-def put_product(id):
-    data = request.get_json()
-    product = update_product(id, data)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-    return jsonify(product), 200
-
-# Eliminar un producto
-@bp.route('/products/<int:id>', methods=['DELETE'])
-def delete_product_route(id):
-    success = delete_product(id)
-    if not success:
-        return jsonify({"error": "Product not found"}), 404
-    return jsonify({"message": "Product deleted"}), 200
-
-# Obtener reviews de un producto
-@bp.route('/products/<int:id>/reviews', methods=['GET'])
-def get_product_reviews(id):
-    try:
-        page = int(request.args.get('page', 1)) 
-        per_page = 10  # Tamaño fijo de reviews por página
-        offset = (page - 1) * per_page  # Calcular el offset basado en la página
-        
+@api.route('/<int:id>/reviews')
+class ProductReviews(Resource):
+    @api.param('page', 'Page number for review pagination', type=int, default=1)
+    @api.param('limit', 'Number of reviews to return', type=int, default=10)
+    def get(self, id):
+        page = int(request.args.get('page', 1))
+        per_page = 10
+        offset = (page - 1) * per_page
         result = get_reviews_by_product(id, limit=per_page, offset=offset)
-        print(f"Result from get_reviews_by_product: {result}")
         reviews, total_reviews = result
 
         if not reviews:
-            return jsonify({
+            return {
                 "error": "No reviews found for this product.",
                 "page": page,
                 "per_page": per_page
-            }), 404
-        
-        return jsonify({
+            }, 404
+
+        return {
             "reviews": reviews,
             "total_reviews": total_reviews,
             "page": page,
             "per_page": per_page,
             "total_pages": (total_reviews + per_page - 1) // per_page
-        }), 200
-    except Exception as e:
-        print(f"Error in get_product_reviews: {e}")
-        return jsonify({"error": "An error occurred while fetching reviews."}), 500
+        }, 200

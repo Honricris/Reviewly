@@ -1,104 +1,107 @@
 import json
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.models.review import Review
-from app.models.product import Product
+import requests
 
-# Configuración de la base de datos
-db_url = "postgresql://postgres:postgres@localhost:5432/Reviewly"
-db_engine = create_engine(db_url)
-Session = sessionmaker(bind=db_engine)
-session = Session()
-
-# Archivo JSONL y configuración del límite de inserción
+# Configuración del archivo JSONL y API
 jsonl_file = "/home/carlos/Escritorio/Cuarto Carrera/TFG/backend/Reviewly_Backend/app/scripts/meta_Appliances.jsonl"
+api_url = "http://127.0.0.1:5000/api/v0/products"
 
-# Variable global para controlar la inserción de todos los productos
-insert_all_products = True  # Establece a True para insertar todos los productos, False para usar el límite
+def get_user_input():
+    """Obtiene la configuración inicial del usuario."""
+    while True:
+        try:
+            insert_all = input("¿Quieres insertar todos los productos del archivo? (s/n): ").strip().lower()
+            if insert_all not in ['s', 'n']:
+                raise ValueError("Por favor, introduce 's' para sí o 'n' para no.")
+            insert_all = insert_all == 's'
 
-# Límite de inserción (solo se usa si insert_all_products es False)
-limit = 30
-
-inserted_count = 0
-
-try:
-    print(f"Abrindo el archivo: {jsonl_file}")
-    with open(jsonl_file, "r", encoding="utf-8") as file:
-        for line in file:
-            print(f"Procesando línea: {line}")
+            limit = 0
+            if not insert_all:
+                limit = int(input("¿Cuántos productos deseas insertar?: "))
+                if limit <= 0:
+                    raise ValueError("El número de productos debe ser mayor a cero.")
             
-            # Si no se insertan todos los productos, se verifica el límite
-            if not insert_all_products and inserted_count >= limit:
-                print(f"Se alcanzó el límite de {limit} productos insertados.")
-                break
+            main_category = input("Introduce la categoría principal para los productos: ").strip()
+            if not main_category:
+                raise ValueError("La categoría no puede estar vacía.")
+            
+            return insert_all, limit, main_category
+        except ValueError as e:
+            print(e)
 
-            try:
-                data = json.loads(line)
-            except json.JSONDecodeError as e:
-                print(f"Error al decodificar JSON: {line}")
-                raise e
+def process_file(jsonl_file, insert_all, limit, main_category):
+    """Procesa el archivo JSONL y devuelve los productos listos para enviar."""
+    products_to_insert = []
+    inserted_count = 0
 
-            # Verifica si el producto ya existe
-            print(f"Verificando si el producto con parent_asin={data.get('parent_asin')} existe.")
-            existing_product = session.query(Product).filter_by(parent_asin=data.get("parent_asin")).first()
+    try:
+        print(f"Abrindo el archivo: {jsonl_file}")
+        with open(jsonl_file, "r", encoding="utf-8") as file:
+            for line in file:
+                if not insert_all and inserted_count >= limit:
+                    print(f"Se alcanzó el límite de {limit} productos seleccionados.")
+                    break
 
-            if existing_product:
-                print(f"El producto con parent_asin={data['parent_asin']} ya existe. Se omite.")
-                continue
+                try:
+                    data = json.loads(line)
+                except json.JSONDecodeError as e:
+                    print(f"Error al decodificar JSON: {line}")
+                    continue
 
-            # Verifica si asin o parent_asin están presentes en los datos
-            if "asin" not in data and "parent_asin" not in data:
-                raise ValueError("Ni 'asin' ni 'parent_asin' están presentes en los datos del producto.")
+                # Agrega campos por defecto si no existen
+                product_data = {
+                    "title": data.get("title", "Sin título"),
+                    "main_category": main_category,
+                    "average_rating": data.get("average_rating", 0.0),
+                    "rating_number": data.get("rating_number", 0),
+                    "features": data.get("features"),
+                    "description": data.get("description"),
+                    "price": data.get("price", 0.0),
+                    "resume_review": data.get("resume_review"),
+                    "images": data.get("images"),
+                    "videos": data.get("videos"),
+                    "store": data.get("store"),
+                    "categories": data.get("categories"),
+                    "details": data.get("details"),
+                    "parent_asin": data.get("asin"),
+                    "bought_together": data.get("bought_together"),
+                    "amazon_link": f"https://www.amazon.com/dp/{data.get('asin', data.get('parent_asin'))}"
+                }
 
-            asin_value = data.get("asin", data.get("parent_asin"))
+                products_to_insert.append(product_data)
+                inserted_count += 1
 
-            amazon_link = f"https://www.amazon.com/dp/{asin_value}"
+    except FileNotFoundError:
+        print(f"El archivo {jsonl_file} no se encontró.")
+    except Exception as e:
+        print(f"Ocurrió un error al procesar el archivo: {e}")
 
-            main_category = data.get("main_category")
-            if main_category is None:
-                main_category = "Uncategorized" 
+    return products_to_insert
 
-            # Crea un nuevo producto con todos los campos
-            new_product = Product(
-                title=data.get("title", "Sin título"),
-                main_category=main_category,
-                average_rating=data.get("average_rating", 0.0),
-                rating_number=data.get("rating_number", 0),
-                features=data.get("features"),
-                description=data.get("description"),
-                price=data.get("price", 0.0),
-                resume_review=data.get("resume_review", None),
-                images=data.get("images"),
-                videos=data.get("videos"),
-                store=data.get("store", None),
-                categories=data.get("categories"),
-                details=data.get("details"),
-                parent_asin=data.get("asin"),
-                bought_together=data.get("bought_together"),
-                amazon_link=amazon_link,
-                asin=asin_value
-            )
+def send_to_api(products, api_url):
+    """Envía los productos a la API en formato JSON."""
+    try:
+        print(f"Enviando {len(products)} productos a la API...")
+        response = requests.post(api_url, json=products)
+        if response.status_code == 201:
+            print("Productos enviados exitosamente.")
+            print(response.json())
+        else:
+            print(f"Error al enviar los productos: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"Ocurrió un error al enviar los datos a la API: {e}")
 
-            # Inserta el producto
-            print(f"Ingresando el producto {data.get('title', 'sin título')}")
-            session.add(new_product)
-            inserted_count += 1
+def main():
+    # Obtener configuración del usuario
+    insert_all, limit, main_category = get_user_input()
 
-    # Confirma los cambios
-    session.commit()
-    print(f"Inserción completada: {inserted_count} productos insertados.")
+    # Procesar el archivo JSONL
+    products_to_insert = process_file(jsonl_file, insert_all, limit, main_category)
 
-except FileNotFoundError:
-    print(f"El archivo {jsonl_file} no se encontró.")
-except json.JSONDecodeError as e:
-    print(f"Error al procesar el archivo JSONL: {e}")
-except ValueError as ve:
-    print(f"Error de valor: {ve}")
-except Exception as e:
-    session.rollback()
-    print(f"Ocurrió un error: {e}")
-    import traceback
-    print("Detalles del error:")
-    traceback.print_exc()  
-finally:
-    session.close()
+    if products_to_insert:
+        # Enviar productos procesados a la API
+        send_to_api(products_to_insert, api_url)
+    else:
+        print("No se encontraron productos para insertar.")
+
+if __name__ == "__main__":
+    main()
