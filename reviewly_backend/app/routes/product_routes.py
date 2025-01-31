@@ -1,13 +1,12 @@
 from flask_restx import Namespace, Resource, fields
 from app.services.product_service import (
-    get_all_products, get_product_by_id, create_product, update_product, delete_product
+    get_all_products, get_product_by_id, create_product, update_product, delete_product, get_all_categories
 )
 from app.services.review_service import get_reviews_by_product
 from flask import request
 
 api = Namespace('products', description='Product related operations')
 
-# Definir el esquema de Product para Swagger
 product_model = api.model('Product', {
     'product_id': fields.Integer(description='Product ID', example=1),
     'title': fields.String(required=True, description='Title of the product', example="Smartphone XYZ"),
@@ -32,14 +31,22 @@ product_model = api.model('Product', {
 
 @api.route('/')
 class ProductList(Resource):
+    @api.param('name', 'Search term for product title', type=str) 
     @api.param('category', 'Category filter for products', type=str)
+    @api.param('price_min', 'Minimum price filter for products', type=float)
+    @api.param('price_max', 'Maximum price filter for products', type=float)
     @api.param('limit', 'Number of products to return', type=int, default=10)
     @api.param('page', 'Page number for pagination', type=int, default=1)
     def get(self):
+        name = request.args.get('name')
         category = request.args.get('category')
+        price_min = request.args.get('price_min', type=float)  
+        price_max = request.args.get('price_max', type=float) 
         limit = request.args.get('limit', type=int)
         page = request.args.get('page', type=int)
-        products = get_all_products(category=category, limit=limit, page=page)
+
+
+        products = get_all_products(category=category, price_min=price_min, price_max=price_max, name=name, limit=limit, page=page)
         return products, 200
 
     @api.expect(product_model)
@@ -71,6 +78,13 @@ class Product(Resource):
             return {"error": "Product not found"}, 404
         return {"message": "Product deleted"}, 200
 
+
+@api.route('/categories')
+class ProductCategories(Resource):
+    def get(self):
+        categories = get_all_categories() 
+        return {"categories": categories}, 200
+    
 @api.route('/<int:id>/reviews')
 class ProductReviews(Resource):
     @api.param('page', 'Page number for review pagination', type=int, default=1)

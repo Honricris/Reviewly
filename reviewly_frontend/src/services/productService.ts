@@ -1,13 +1,16 @@
 import apiClient from './apiClient';
 
 
-export const getProducts = async (page: number,limit: number, category?: string) => {
+export const getProducts = async (page: number, limit: number, category?: string, name?: string, price_min?: number, price_max?: number) => {
   try {
     const response = await apiClient.get('/products', {
       params: {
         limit,
         page,
-        ...(category && { category }), 
+        ...(category && { category }),
+        ...(name && { name }),
+        ...(price_min !== undefined && { price_min }),
+        ...(price_max !== undefined && { price_max }),
       },
     });
     return response.data;

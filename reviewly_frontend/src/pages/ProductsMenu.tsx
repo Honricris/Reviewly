@@ -5,10 +5,13 @@ import Header from '../components/Header';
 import FiltersMenu from '../components/FiltersMenu'; // Asegúrate de importar correctamente este componente
 import '../styles/ProductsMenu.css';
 import ChatBubble  from '../components/ChatBubble';
+import { getProducts } from '../services/productService';
 
 const ProductsMenu: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { applianceProducts, musicalProducts,videoGameProducts, loading, error } = useProductsMenu();
-
+  const [products, setProducts] = useState<any[]>([]);
+  
   const [showChat, setShowChat] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string >("");
   const [selectedStore, setSelectedStore] = useState<string >("");
@@ -25,10 +28,15 @@ const ProductsMenu: React.FC = () => {
     setShowChat((prev) => !prev);
   };
 
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    const fetchedProducts = await getProducts(1, 10, undefined, query);
+    setProducts(fetchedProducts.products);
+  };
   
   return (
     <div className="products-menu-container">
-      <Header />
+      <Header onSearch={handleSearch} />
       <div className="products-content">
         {/* Filtros */}
         {!showChat && (
@@ -50,9 +58,15 @@ const ProductsMenu: React.FC = () => {
 
         {/* Productos */}
         <div className="products-display-wrapper">
-          <ProductsDisplay title="Latest in Appliances" products={applianceProducts} />
-          <ProductsDisplay title="Latest in Musical Instruments" products={musicalProducts} />
-          <ProductsDisplay title="Latest in Video Games" products={videoGameProducts} />
+          {searchQuery ? (
+            <ProductsDisplay title="Search Results" products={products} />
+          ) : (
+            <>
+              <ProductsDisplay title="Latest in Appliances" products={applianceProducts} />
+              <ProductsDisplay title="Latest in Musical Instruments" products={musicalProducts} />
+              <ProductsDisplay title="Latest in Video Games" products={videoGameProducts} />
+            </>
+          )}
         </div>
       </div>
       <ChatBubble 

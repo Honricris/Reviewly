@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 
 
 
-def get_all_products(category=None, page=1, limit=43):
+def get_all_products(category=None, price_min=None, price_max=None, name=None, page=1, limit=43):
     if page is None:
         page = 1
     print(f"Inicio del método: category={category}, page={page}, limit={limit}")
@@ -12,10 +12,24 @@ def get_all_products(category=None, page=1, limit=43):
     query = Product.query
     print("Query inicial creada.")
 
-    # Filtrar por categoría si se proporciona
+
+    if name:
+        query = query.filter(Product.title.ilike(f'%{name}%')) 
+
     if category:
         query = query.filter(Product.main_category == category)
         print(f"Query filtrada por categoría: {category}")
+
+
+    if price_min is not None:
+        query = query.filter(Product.price >= price_min)
+        print(f"Query filtrada por precio mínimo: {price_min}")
+
+
+    if price_max is not None:
+        query = query.filter(Product.price <= price_max)
+        print(f"Query filtrada por precio máximo: {price_max}")
+
 
     # Calcular el total de productos (para saber el número total de páginas)
     total_products = query.count()
@@ -233,3 +247,9 @@ def delete_product(product_id: int) -> bool:
     db.session.commit()
 
     return True
+
+
+
+def get_all_categories():
+    categories = Product.query.with_entities(Product.main_category).distinct().all()
+    return [category[0] for category in categories]

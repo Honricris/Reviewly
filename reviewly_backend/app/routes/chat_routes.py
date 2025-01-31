@@ -12,7 +12,7 @@ query_payload = api.model('QueryPayload', {
 
 @api.route('/query')
 class GeneralQuery(Resource):
-    @api.expect(query_payload)  # Usar el modelo para documentar el payload
+    @api.expect(query_payload) 
     def post(self):
         data = api.payload
         question = data.get('prompt')
@@ -29,7 +29,7 @@ class GeneralQuery(Resource):
 
 @api.route('/product/<int:product_id>')
 class ProductQuery(Resource):
-    @api.expect(query_payload)  # Usar el modelo para documentar el payload
+    @api.expect(query_payload)  
     def post(self, product_id):
         data = api.payload
         question = data.get('prompt')

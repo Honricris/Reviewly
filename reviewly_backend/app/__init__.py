@@ -11,7 +11,7 @@ import os
 db = SQLAlchemy()
 
 def check_required_env_vars():
-    load_dotenv()  # Cargar variables de entorno desde .env
+    load_dotenv()  
     required_env_vars = ['DATABASE_URL', 'EDEN_API_TOKEN', 'EDEN_API_URL']
     missing_vars = [var for var in required_env_vars if not os.getenv(var)]
 
@@ -23,7 +23,7 @@ check_required_env_vars()
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)  # Habilitar CORS
+    CORS(app)
 
     # Prefijo de la API
     API_PREFIX = '/api/v0'
