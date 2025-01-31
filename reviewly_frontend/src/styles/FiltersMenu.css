@@ -1,16 +1,15 @@
 
-/* Ajustes al menú de filtros */
 .filters-menu {
-    flex-basis: 240px; 
-    position: sticky;
-    top: 120px;
-    max-height: calc(100vh - 700px); 
-    overflow-y: auto;
-    padding: 1rem;
-    background-color: #f9f9f9;
-    z-index: 5;
-    margin-top: 2rem; 
-  }
+  flex-basis: 240px;
+  position: sticky;
+  top: 120px; 
+  max-height: calc(100vh - 120px); 
+  overflow-y: auto;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  z-index: 5;
+  margin-top: 0; 
+}
 
   .filters-header {
     display: flex;

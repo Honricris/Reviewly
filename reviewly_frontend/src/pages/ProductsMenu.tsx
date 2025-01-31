@@ -1,69 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import ProductCard from '../components/ProductCard';
-import FiltersMenu from '../components/FiltersMenu';
-import ChatBubble from '../components/ChatBubble';
+import React, { useState } from 'react';
+import ProductsDisplay from '../components/ProductsDisplay';
 import useProductsMenu from '../hooks/useProductsMenu';
-import Header from '../components/Header'; 
+import Header from '../components/Header';
+import FiltersMenu from '../components/FiltersMenu'; // Asegúrate de importar correctamente este componente
 import '../styles/ProductsMenu.css';
+import ChatBubble  from '../components/ChatBubble';
 
 const ProductsMenu: React.FC = () => {
-  const [showChat, setShowChat] = useState(false);
+  const { applianceProducts, musicalProducts,videoGameProducts, loading, error } = useProductsMenu();
 
-  const {
-    searchQuery,
-    setSearchQuery,
-    isExpanded,
-    setIsExpanded,
-    searchBarRef,
-    filteredProducts,
-    loading,
-    error,
-    selectedCategory,
-    setSelectedCategory,
-    selectedStore,
-    setSelectedStore,
-    priceRange,
-    setPriceRange,
-    categoryExpanded,
-    setCategoryExpanded,
-    currentPage,
-    goToPreviousPage,
-    totalPages,
-    goToNextPage,
-    storeExpanded,
-    setStoreExpanded,
-    priceExpanded,
-    setPriceExpanded,
-  } = useProductsMenu();
+  const [showChat, setShowChat] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string >("");
+  const [selectedStore, setSelectedStore] = useState<string >("");
+  const [priceRange, setPriceRange] = useState<[number, number] >([0,1]);
+  const [categoryExpanded, setCategoryExpanded] = useState(false);
+  const [storeExpanded, setStoreExpanded] = useState(false);
+  const [priceExpanded, setPriceExpanded] = useState(false);
+
+  if (loading) return <div>Loading products...</div>;
+  if (error) return <div>Error: {error}</div>;
+
 
   const toggleChat = () => {
     setShowChat((prev) => !prev);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchBarRef.current &&
-        !searchBarRef.current.contains(event.target as Node)
-      ) {
-        setIsExpanded(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [searchBarRef, setIsExpanded]);
-
-  if (loading) return <div>Loading products...</div>;
-  if (error) return <div>Error: {error}</div>;
-
+  
   return (
     <div className="products-menu-container">
       <Header />
       <div className="products-content">
+        {/* Filtros */}
         {!showChat && (
           <FiltersMenu
             selectedCategory={selectedCategory}
@@ -81,37 +48,11 @@ const ProductsMenu: React.FC = () => {
           />
         )}
 
-        <div className="products-display-container">
-          <div className="products-grid">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                imageUrl={product.imageUrl}
-                store={product.store}
-                price={product.price}
-                averageRating={product.averageRating}
-              />
-            ))}
-          </div>
-          <div className="pagination-controls">
-            <button
-              disabled={currentPage === 1}
-              onClick={goToPreviousPage}
-              className="pagination-button"
-            >
-              Previous
-            </button>
-            <span>Page {currentPage} of {totalPages}</span>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={goToNextPage}
-              className="pagination-button"
-            >
-              Next
-            </button>
-          </div>
+        {/* Productos */}
+        <div className="products-display-wrapper">
+          <ProductsDisplay title="Latest in Appliances" products={applianceProducts} />
+          <ProductsDisplay title="Latest in Musical Instruments" products={musicalProducts} />
+          <ProductsDisplay title="Latest in Video Games" products={videoGameProducts} />
         </div>
       </div>
       <ChatBubble 
@@ -122,6 +63,7 @@ const ProductsMenu: React.FC = () => {
         scrollToHighlightedReview={() => {}} 
       />
     </div>
+    
   );
 };
 

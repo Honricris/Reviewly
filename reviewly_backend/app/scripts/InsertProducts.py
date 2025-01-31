@@ -2,7 +2,7 @@ import json
 import requests
 
 # Configuración del archivo JSONL y API
-jsonl_file = "/home/carlos/Escritorio/Cuarto Carrera/TFG/backend/Reviewly_Backend/app/scripts/meta_Appliances.jsonl"
+jsonl_file = "/home/carlos/Escritorio/Cuarto Carrera/TFG/bbdd/Musical_instruments/meta_Musical_Instruments.jsonl"
 api_url = "http://127.0.0.1:5000/api/v0/products"
 
 def get_user_input():
@@ -47,7 +47,6 @@ def process_file(jsonl_file, insert_all, limit, main_category):
                     print(f"Error al decodificar JSON: {line}")
                     continue
 
-                # Agrega campos por defecto si no existen
                 product_data = {
                     "title": data.get("title", "Sin título"),
                     "main_category": main_category,
@@ -62,7 +61,8 @@ def process_file(jsonl_file, insert_all, limit, main_category):
                     "store": data.get("store"),
                     "categories": data.get("categories"),
                     "details": data.get("details"),
-                    "parent_asin": data.get("asin"),
+                    "parent_asin": data.get("parent_asin"),
+                    "asin": data.get("asin"),
                     "bought_together": data.get("bought_together"),
                     "amazon_link": f"https://www.amazon.com/dp/{data.get('asin', data.get('parent_asin'))}"
                 }

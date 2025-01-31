@@ -1,12 +1,13 @@
 import apiClient from './apiClient';
 
 
-export const getProducts = async (page : number) => {
+export const getProducts = async (page: number,limit: number, category?: string) => {
   try {
     const response = await apiClient.get('/products', {
       params: {
-        limit: 63,
+        limit,
         page,
+        ...(category && { category }), 
       },
     });
     return response.data;

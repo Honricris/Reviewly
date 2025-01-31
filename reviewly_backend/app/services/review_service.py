@@ -36,66 +36,101 @@ def get_reviews_by_product(product_id, limit=10, offset=0):
         return [], 0
     
 
-def create_reviews_for_product(product_id: int, reviews: list) -> tuple:
+def create_review_for_product(data: dict) -> tuple:
     """
-    Crea múltiples reseñas para un producto específico.
+    Crea una única reseña para un producto asociado a su parent_asin.
 
     Args:
-        product_id (int): ID del producto al que se añadirán las reseñas.
-        reviews (list): Lista de datos de reseñas.
+        data (dict): Datos de la reseña.
 
     Returns:
         tuple: Respuesta en formato JSON y el código de estado HTTP.
     """
-    # Buscar el producto en la base de datos
-    product = Product.query.filter_by(product_id=product_id).first()
+    print("Procesando reseña:", data)  # Imprimir los datos de la reseña
+
+    # Buscar el producto usando el parent_asin
+    parent_asin = data.get('parent_asin') or data.get('asin')
+    print(f"parent_asin obtenido: {parent_asin}")
+    
+    if not parent_asin:
+        return {"error": "No se encontró parent_asin en los datos de la reseña"}, 400
+
+    product = Product.query.filter_by(parent_asin=parent_asin).first()
     if not product:
-        return {"error": "Product not found for the given product_id"}, 404
+        print(f"Producto con parent_asin '{parent_asin}' no encontrado")
+        return {"error": f"Producto con parent_asin '{parent_asin}' no encontrado"}, 404
 
-    created_reviews = []
-
-    for data in reviews:
-        # Verificar si el usuario existe
-        amazon_user = AmazonUser.query.filter_by(amazon_user_id=data['user_id']).first()
-        if not amazon_user:
-            amazon_user = AmazonUser(
-                amazon_user_id=data['user_id'],
-                name=None  
-            )
-            try:
-                db.session.add(amazon_user)
-                db.session.commit()
-            except IntegrityError:
-                db.session.rollback()
-                amazon_user = AmazonUser.query.filter_by(amazon_user_id=data['user_id']).first()
-
-        timestamp = datetime.utcfromtimestamp(data['timestamp'] / 1000)
-
-        review = Review(
+    # Verificar si el usuario existe, si no, crearlo
+    amazon_user = AmazonUser.query.filter_by(amazon_user_id=data['user_id']).first()
+    print(f"Usuario encontrado: {amazon_user}")
+    if not amazon_user:
+        print(f"Usuario con amazon_user_id '{data['user_id']}' no encontrado. Creando usuario...")
+        amazon_user = AmazonUser(
             amazon_user_id=data['user_id'],
-            title=data['title'],
-            text=data['text'],
-            rating=data['rating'],
-            images=data['images'],
-            sentiment=data.get('sentiment', 'neutral'),
-            helpful_vote=data.get('helpful_vote', 0),
-            verified_purchase=data.get('verified_purchase', False),
-            timestamp=timestamp,
-            parent_asin=product.parent_asin, 
-            asin=data.get('asin', product.parent_asin),
-            product_id=product.product_id
+            name=None  
         )
-
-        # Guardar la reseña en la base de datos
         try:
-            db.session.add(review)
+            db.session.add(amazon_user)
             db.session.commit()
-            created_reviews.append(review.to_dict())
-        except Exception as e:
+            print(f"Usuario con amazon_user_id '{data['user_id']}' creado")
+        except IntegrityError:
             db.session.rollback()
-            return {"error": str(e)}, 500
+            amazon_user = AmazonUser.query.filter_by(amazon_user_id=data['user_id']).first()
+            print(f"Error de integridad, usuario ya existe: {amazon_user}")
 
-    return created_reviews, 201
+    # Procesar el timestamp
+    try:
+        print(f"Valor de timestamp antes de validación: {data.get('timestamp')}")
+        if isinstance(data['timestamp'], int):
+            timestamp = str(datetime.utcfromtimestamp(data['timestamp'] / 1000).isoformat())
+            print(f"Timestamp convertido: {timestamp}")
+        else:
+            print(f"Timestamp no es un número válido: {data['timestamp']}")
+            return {"error": "El timestamp debe ser un valor numérico en milisegundos."}, 400
+    except Exception as e:
+        print(f"Error al procesar el timestamp: {e}")
+        return {"error": "Error procesando el timestamp"}, 400
+
+    # Crear la reseña
+    print(f"Creando reseña para producto con parent_asin '{parent_asin}'")
+    review = Review(
+        amazon_user_id=data['user_id'],
+        title=data['title'],
+        text=data['text'],
+        rating=data['rating'],
+        images=data['images'],
+        sentiment=data.get('sentiment', 'neutral'),
+        helpful_vote=data.get('helpful_vote', 0),
+        verified_purchase=data.get('verified_purchase', False),
+        timestamp=timestamp,
+        parent_asin=parent_asin,
+        asin=data.get('asin', product.asin),
+        product_id=product.product_id
+    )
+
+    # Generar el embedding para la reseña
+    try:
+        print("Generando embedding para la reseña")
+        review_embedding = model.encode([data['text']]).tolist()[0]
+        review.embedding = review_embedding
+    except Exception as e:
+        print(f"Error generando el embedding: {e}")
+        return {"error": "Error generando el embedding para la reseña"}, 500
+
+    # Guardar la reseña en la base de datos
+    try:
+        print(f"Guardando reseña en la base de datos para producto con parent_asin '{parent_asin}'")
+        db.session.add(review)
+        db.session.commit()
+        print(f"Reseña guardada: {review.to_dict()}")
+        return review.to_dict(), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error guardando reseña: {e}")
+        return {"error": str(e)}, 500
+
+
+
 
 def delete_review(review_id: int):
     """Elimina una reseña por su ID."""

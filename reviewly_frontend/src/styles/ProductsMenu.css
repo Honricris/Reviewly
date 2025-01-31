@@ -25,6 +25,13 @@
   height: 80px; 
 }
 
+.products-title {
+
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
 
 /* Contenedor general que agrupa productos y filtros */
 .products-content {
@@ -35,7 +42,12 @@
 
 .products-display-container {
   width: 100%;
+  margin-top: 0;
+  padding: 1rem;
+  position: relative; 
+  top: 60px; 
 }
+
 
 
 /* Agrupar el menú de filtros y la cuadrícula de productos */
@@ -46,13 +58,20 @@
   flex-wrap: wrap; 
 }
 
+.products-display-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; 
+  width: 100%; 
+}
+
 /* Cuadrícula de productos */
 .products-grid {
   flex-grow: 1;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
-  padding-top: 40px;
+
 }
 
 

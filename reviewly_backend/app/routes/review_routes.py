@@ -1,10 +1,19 @@
 from flask_restx import Namespace, Resource, fields
 
 from app.services.review_service import (
-    create_reviews_for_product, delete_review, update_review
+    create_review_for_product, delete_review, update_review
 )
 
 api = Namespace('reviews', description='Review related operations')
+
+
+image_model = api.model('Image', {
+    'small_image_url': fields.String(description='URL de la imagen pequeña', example="https://images-na.ssl-images-amazon.com/images/I/61gGVCuJyHL._SL256_.jpg"),
+    'medium_image_url': fields.String(description='URL de la imagen mediana', example="https://images-na.ssl-images-amazon.com/images/I/61gGVCuJyHL._SL800_.jpg"),
+    'large_image_url': fields.String(description='URL de la imagen grande', example="https://images-na.ssl-images-amazon.com/images/I/61gGVCuJyHL.jpg"),
+    'attachment_type': fields.String(description='Tipo de adjunto', example="IMAGE")
+})
+
 
 review_model = api.model('Review', {
     'review_id': fields.Integer(description='ID de la reseña', example=1),
@@ -13,29 +22,39 @@ review_model = api.model('Review', {
     'title': fields.String(description='Título de la reseña', example="Gran producto"),
     'text': fields.String(description='Texto de la reseña', example="Este producto superó mis expectativas..."),
     'rating': fields.Float(description='Calificación de la reseña', example=4.5),
-    'images': fields.List(fields.String, description='Imágenes de la reseña', example=["image1.jpg", "image2.jpg"]),
+    'images': fields.List(fields.Nested(image_model), description='Lista de imágenes con sus URLs y tipo de adjunto', example=[
+        {
+            "small_image_url": "https://images-na.ssl-images-amazon.com/images/I/61gGVCuJyHL._SL256_.jpg",
+            "medium_image_url": "https://images-na.ssl-images-amazon.com/images/I/61gGVCuJyHL._SL800_.jpg",
+            "large_image_url": "https://images-na.ssl-images-amazon.com/images/I/61gGVCuJyHL.jpg",
+            "attachment_type": "IMAGE"
+        },
+        {
+            "small_image_url": "https://images-na.ssl-images-amazon.com/images/I/61k6m6MmOpL._SL256_.jpg",
+            "medium_image_url": "https://images-na.ssl-images-amazon.com/images/I/61k6m6MmOpL._SL800_.jpg",
+            "large_image_url": "https://images-na.ssl-images-amazon.com/images/I/61k6m6MmOpL.jpg",
+            "attachment_type": "IMAGE"
+        }
+    ]),   
     'sentiment': fields.String(description='Sentimiento de la reseña', example="positivo"),
     'helpful_vote': fields.Integer(description='Número de votos útiles', example=10),
     'verified_purchase': fields.Boolean(description='Compra verificada', example=True),
-    'timestamp': fields.DateTime(description='Fecha y hora de la reseña', example="2023-12-01T12:00:00Z"),
+    'timestamp': fields.Integer(description='Fecha y hora de la reseña', example=1474996253000),
     'asin': fields.String(description='ASIN del producto', example="B08R29V9FQ"),
     'parent_asin': fields.String(description='Parent ASIN if any', example="B08J6F174Z")
 
 })
 
-# Ruta para crear reseñas para un producto
-@api.route('/<int:product_id>')
+@api.route('/')
 class Reviews(Resource):
     @api.expect(review_model, validate=True)
-    def post(self, product_id):
+    def post(self):
         """
-        Crear reseñas para un producto
+        Crear una reseña basada en el parent_asin.
         """
         data = api.payload
-        if not isinstance(data, list):
-            return {"error": "Se esperaba una lista de reseñas"}, 400
-
-        response, status_code = create_reviews_for_product(product_id, data)
+     
+        response, status_code = create_review_for_product(data)
         return response, status_code
 
 # Ruta para eliminar una reseña

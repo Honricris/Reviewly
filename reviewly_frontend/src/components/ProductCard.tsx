@@ -23,13 +23,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, imageUrl, store, pr
     <div className="product-card" onClick={handleClick}>
       <img src={imageUrl} alt={name} />
       <div className="product-card-details">
-        <h3 className="product-name">{name}</h3>
         <p className="product-store">{store}</p>
-        <div className="product-price-rating">
-          {price > 0 && <span className="product-price">${price.toFixed(2)}</span>}
-          <span className="product-rating">
-            <Rating value={averageRating} precision={0.1} readOnly size="small" />
-          </span>
+        <h3 className="product-name">{name}</h3>
+        <span className="product-price">${price > 0 ? price.toFixed(2) : 'N/A'}</span>
+        <div className="product-rating">
+          <Rating value={averageRating} precision={0.1} readOnly size="small" />
         </div>
       </div>
     </div>

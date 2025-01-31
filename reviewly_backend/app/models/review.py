@@ -48,7 +48,7 @@ class Review(db.Model):
             "product_id": self.product_id,
             "title": self.title,
             "text": self.text,
-            "rating": self.rating,
+            "rating": float(self.rating),
             "images": self.images,
             "sentiment": self.sentiment,
             "helpful_vote": self.helpful_vote,
