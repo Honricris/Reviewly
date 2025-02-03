@@ -22,10 +22,12 @@ class GeneralQuery(Resource):
 
         answer = eden_chat_service.ask_general_question(question)
 
-        if answer == 'No response from Eden AI':
-            return {"error": "Internal server error, no response from Eden AI"}, 500
-        
-        return {"answer": answer}
+        if isinstance(answer, dict) and "error" in answer:
+            return {"error": answer["error"]}, 500
+
+       
+        return answer
+
 
 @api.route('/product/<int:product_id>')
 class ProductQuery(Resource):

@@ -47,9 +47,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
         text: botAnswer.answer,
         reviewIds: botAnswer.reviews, 
         time: new Date().toLocaleTimeString(),
+        products: botAnswer.products,
       };
       setMessages((prev) => [...prev, botMessage]);
 
+      
       if (onResponse) {
         onResponse(botAnswer); 
       }

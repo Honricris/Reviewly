@@ -8,10 +8,11 @@ import ChatBubble  from '../components/ChatBubble';
 import { getProducts } from '../services/productService';
 
 const ProductsMenu: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const { applianceProducts, musicalProducts,videoGameProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
-  
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+
   const [showChat, setShowChat] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string >("");
   const [selectedStore, setSelectedStore] = useState<string >("");
@@ -29,11 +30,25 @@ const ProductsMenu: React.FC = () => {
   };
 
   const handleSearch = async (query: string) => {
-    setSearchQuery(query);
+    setSearchQuery(query); 
+    if (query.trim() === "") {
+      setProducts([]); 
+      return;
+    }
+    
     const fetchedProducts = await getProducts(1, 10, undefined, query);
     setProducts(fetchedProducts.products);
   };
   
+
+  const handleChatResponse = (botAnswer: { answer: string; products: any[] }) => {
+    console.log('Bot answer received:', botAnswer);
+    if (botAnswer.products) {
+      setProducts(botAnswer.products); 
+    }
+  };
+
+
   return (
     <div className="products-menu-container">
       <Header onSearch={handleSearch} />
@@ -58,7 +73,7 @@ const ProductsMenu: React.FC = () => {
 
         {/* Productos */}
         <div className="products-display-wrapper">
-          {searchQuery ? (
+          {products.length > 0 ? (
             <ProductsDisplay title="Search Results" products={products} />
           ) : (
             <>
@@ -74,6 +89,7 @@ const ProductsMenu: React.FC = () => {
         isOpen={showChat} 
         queryEndpoint="/chat/query"
         highlightedReviewIds={[]}  
+        onResponse={handleChatResponse}
         scrollToHighlightedReview={() => {}} 
       />
     </div>

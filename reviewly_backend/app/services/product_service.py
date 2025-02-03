@@ -10,7 +10,6 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None, p
     print(f"Inicio del método: category={category}, page={page}, limit={limit}")
 
     query = Product.query
-    print("Query inicial creada.")
 
 
     if name:
@@ -18,31 +17,26 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None, p
 
     if category:
         query = query.filter(Product.main_category == category)
-        print(f"Query filtrada por categoría: {category}")
+        
 
 
     if price_min is not None:
         query = query.filter(Product.price >= price_min)
-        print(f"Query filtrada por precio mínimo: {price_min}")
 
 
     if price_max is not None:
         query = query.filter(Product.price <= price_max)
-        print(f"Query filtrada por precio máximo: {price_max}")
 
 
-    # Calcular el total de productos (para saber el número total de páginas)
     total_products = query.count()
     print(f"Total de productos encontrados: {total_products}")
-    total_pages = (total_products + limit - 1) // limit  # Redondeo hacia arriba
+    total_pages = (total_products + limit - 1) // limit  
     print(f"Total de páginas calculadas: {total_pages}")
 
-    # Aplicar paginación (offset basado en la página actual)
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
     print(f"Offset aplicado: {offset}, límite: {limit}")
 
-    # Obtener productos
     try:
         products = query.options(joinedload(Product.reviews)).all()
         print(f"Productos obtenidos: {len(products)}")
@@ -50,11 +44,9 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None, p
         print(f"Error al obtener productos: {e}")
         return {"error": "Error al obtener productos"}
 
-    # Transformar los productos a JSON serializable
     result = []
     for i, p in enumerate(products):
         try:
-            # Filtrar solo las imágenes 'large'
             large_images = [img.get("large") for img in p.images if isinstance(img, dict) and "large" in img] if p.images else []
             print(f"Producto {i} procesado: {p.product_id}")
 
