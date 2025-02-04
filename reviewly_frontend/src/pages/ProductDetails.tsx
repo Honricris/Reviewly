@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { getProductById, getProductReviews } from '../services/productService';
 import '../styles/ProductDetails.css';
 import ChatBubble from '../components/ChatBubble';
-import { Rating } from '@mui/material';
+import { Rating, Button } from '@mui/material';
 import Header from '../components/Header';
 
 const ProductDetails: React.FC = () => {
@@ -75,13 +75,16 @@ const ProductDetails: React.FC = () => {
     setIsDragging(false);
   };
 
-  const handleArrowClick = async (direction: 'left' | 'right') => {
-    if (direction === 'left' && currentPage > 1) {
+  const handlePageChange = async (direction: 'previous' | 'next') => {
+    if (direction === 'previous' && currentPage > 1) {
       setCurrentPage((prevPage) => prevPage - 1);
-    } else if (direction === 'right' && currentPage < totalPages) {
+    } else if (direction === 'next' && currentPage < totalPages) {
       setCurrentPage((prevPage) => prevPage + 1);
     }
   };
+
+  const SearchHandler = () => {};
+
 
   const handleImageClick = (image: string) => {
     setSelectedImage(image);
@@ -100,10 +103,8 @@ const ProductDetails: React.FC = () => {
     while (!found && page <= totalPages) {
       console.log(`Checking page: ${page}`);
       
-      // Obtener las reseñas de la página actual
       const reviewsData = await getProductReviews(id!, page);
   
-      // Verificar si la reseña está en esta página
       const reviewIndex = reviewsData.reviews.findIndex((review: any) => review.review_id === reviewId);
   
       if (reviewIndex !== -1) {
@@ -111,13 +112,11 @@ const ProductDetails: React.FC = () => {
         console.log(`Review found on page ${page} at index ${reviewIndex}`);
         setCurrentPage(page);
   
-        // Esperar a que la página se cargue antes de desplazar
         setTimeout(() => {
           const reviewElement = document.getElementById(`review-${reviewId}`);
           if (reviewElement) {
             console.log(`Scrolling to review element with ID: review-${reviewId}`);
             
-            // Asegúrate de centrar la reseña
             reviewElement.scrollIntoView({
               behavior: 'smooth',
               block: 'center',
@@ -143,7 +142,7 @@ const ProductDetails: React.FC = () => {
 
   return (
     <div className="product-details-container">
-      <Header />
+      <Header onSearch={SearchHandler}/>
       <h1>{product.title}</h1>
       <div className={`content-layout ${isChatOpen ? 'chat-open' : ''}`}>
         <div className="product-layout">
@@ -188,13 +187,14 @@ const ProductDetails: React.FC = () => {
           <h2>Reviews</h2>
           <hr className="section-divider" />
           <div className="reviews-wrapper">
-            <button
-              className="arrow-button left-arrow"
-              onClick={() => handleArrowClick('left')}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handlePageChange('previous')}
               disabled={currentPage === 1}
             >
-              ◀
-            </button>
+              Previous Page
+            </Button>
             <div
               className="reviews-container"
               ref={reviewsContainerRef}
@@ -234,13 +234,14 @@ const ProductDetails: React.FC = () => {
                 <p>No reviews available for this product.</p>
               )}
             </div>
-            <button
-              className="arrow-button right-arrow"
-              onClick={() => handleArrowClick('right')}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handlePageChange('next')}
               disabled={currentPage === totalPages}
             >
-              ▶
-            </button>
+              Next Page
+            </Button>
           </div>
           <p>Page {currentPage} of {totalPages}</p>
         </div>

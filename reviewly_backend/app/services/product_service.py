@@ -29,17 +29,13 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None, p
 
 
     total_products = query.count()
-    print(f"Total de productos encontrados: {total_products}")
     total_pages = (total_products + limit - 1) // limit  
-    print(f"Total de páginas calculadas: {total_pages}")
 
     offset = (page - 1) * limit
     query = query.offset(offset).limit(limit)
-    print(f"Offset aplicado: {offset}, límite: {limit}")
 
     try:
         products = query.options(joinedload(Product.reviews)).all()
-        print(f"Productos obtenidos: {len(products)}")
     except Exception as e:
         print(f"Error al obtener productos: {e}")
         return {"error": "Error al obtener productos"}
@@ -48,7 +44,6 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None, p
     for i, p in enumerate(products):
         try:
             large_images = [img.get("large") for img in p.images if isinstance(img, dict) and "large" in img] if p.images else []
-            print(f"Producto {i} procesado: {p.product_id}")
 
             result.append({
                 "product_id": p.product_id,
@@ -63,7 +58,6 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None, p
         except Exception as e:
             print(f"Error procesando producto {i}: {e}")
 
-    print(f"Resultados procesados: {len(result)}")
 
     response = {
         "products": result,

@@ -46,6 +46,8 @@
   padding: 1rem;
   position: relative; 
   top: 60px; 
+  min-height: 400px;
+
 }
 
 
@@ -147,7 +149,7 @@
   color: #fff;
   border-radius: 50%;
   width: 60px;
-  height: 60px;
+  height: 800px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -160,6 +162,22 @@
 
 .chat-bubble:hover {
   transform: scale(1.1);
+}
+
+
+.products-display-wrapper {
+  width: 100%; 
+  transition: width 0.3s ease; 
+}
+
+.products-display-wrapper.with-chat {
+  width: calc(100% - 500px); 
+  transition: width 0.3s ease; 
+}
+
+.products-display-wrapper.no-chat {
+  width: 100%; 
+  transition: width 0.3s ease; 
 }
 
 

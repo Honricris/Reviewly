@@ -1,99 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProductsDisplay from '../components/ProductsDisplay';
 import useProductsMenu from '../hooks/useProductsMenu';
 import Header from '../components/Header';
-import FiltersMenu from '../components/FiltersMenu'; // Asegúrate de importar correctamente este componente
+import FiltersMenu from '../components/FiltersMenu'; 
 import '../styles/ProductsMenu.css';
-import ChatBubble  from '../components/ChatBubble';
+import ChatBubble from '../components/ChatBubble';
 import { getProducts } from '../services/productService';
 
 const ProductsMenu: React.FC = () => {
-  const { applianceProducts, musicalProducts,videoGameProducts, loading, error } = useProductsMenu();
+  const { applianceProducts, musicalProducts, videoGameProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-
-
   const [showChat, setShowChat] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string >("");
-  const [selectedStore, setSelectedStore] = useState<string >("");
-  const [priceRange, setPriceRange] = useState<[number, number] >([0,1]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedStore, setSelectedStore] = useState<string>("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1]);
   const [categoryExpanded, setCategoryExpanded] = useState(false);
   const [storeExpanded, setStoreExpanded] = useState(false);
   const [priceExpanded, setPriceExpanded] = useState(false);
-
-  if (loading) return <div>Loading products...</div>;
-  if (error) return <div>Error: {error}</div>;
-
 
   const toggleChat = () => {
     setShowChat((prev) => !prev);
   };
 
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query); 
-    if (query.trim() === "") {
-      setProducts([]); 
-      return;
-    }
-    
-    const fetchedProducts = await getProducts(1, 10, undefined, query);
-    setProducts(fetchedProducts.products);
-  };
-  
+  useEffect(() => {
+    const delaySearch = setTimeout(async () => {
+      console.log(searchQuery)
+      if (searchQuery.trim() === "") {
+        setProducts([]); 
+        return;
+      }
 
-  const handleChatResponse = (botAnswer: { answer: string; products: any[] }) => {
-    console.log('Bot answer received:', botAnswer);
-    if (botAnswer.products) {
-      setProducts(botAnswer.products); 
-    }
-  };
+      const fetchedProducts = await getProducts(1, 70, undefined, searchQuery);
+      setProducts(fetchedProducts.products);
+    }, 300);
 
+    return () => clearTimeout(delaySearch);
+  }, [searchQuery]);
 
   return (
     <div className="products-menu-container">
-      <Header onSearch={handleSearch} />
-      <div className="products-content">
-        {/* Filtros */}
-        {!showChat && (
-          <FiltersMenu
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            selectedStore={selectedStore}
-            setSelectedStore={setSelectedStore}
-            priceRange={priceRange}
-            setPriceRange={setPriceRange}
-            categoryExpanded={categoryExpanded}
-            setCategoryExpanded={setCategoryExpanded}
-            storeExpanded={storeExpanded}
-            setStoreExpanded={setStoreExpanded}
-            priceExpanded={priceExpanded}
-            setPriceExpanded={setPriceExpanded}
-          />
-        )}
+      {loading && <div>Loading products...</div>}
+      {error && <div>Error: {error}</div>}
+      {!loading && !error && (
+        <>
+          <Header onSearch={setSearchQuery} />
+          <div className="products-content">
+            {!showChat && (
+              <FiltersMenu
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                selectedStore={selectedStore}
+                setSelectedStore={setSelectedStore}
+                priceRange={priceRange}
+                setPriceRange={setPriceRange}
+                categoryExpanded={categoryExpanded}
+                setCategoryExpanded={setCategoryExpanded}
+                storeExpanded={storeExpanded}
+                setStoreExpanded={setStoreExpanded}
+                priceExpanded={priceExpanded}
+                setPriceExpanded={setPriceExpanded}
+              />
+            )}
 
-        {/* Productos */}
-        <div className="products-display-wrapper">
-          {products.length > 0 ? (
-            <ProductsDisplay title="Search Results" products={products} />
-          ) : (
-            <>
-              <ProductsDisplay title="Latest in Appliances" products={applianceProducts} />
-              <ProductsDisplay title="Latest in Musical Instruments" products={musicalProducts} />
-              <ProductsDisplay title="Latest in Video Games" products={videoGameProducts} />
-            </>
-          )}
-        </div>
-      </div>
-      <ChatBubble 
-        onClick={toggleChat} 
-        isOpen={showChat} 
-        queryEndpoint="/chat/query"
-        highlightedReviewIds={[]}  
-        onResponse={handleChatResponse}
-        scrollToHighlightedReview={() => {}} 
-      />
+            <div className={`products-display-wrapper ${showChat ? 'with-chat' : ''}`}>
+
+               {products.length > 0 ? (
+                <ProductsDisplay title="Search Results" products={products} />
+              ) : (
+                <>
+                  <ProductsDisplay 
+                    title="Latest in Appliances" 
+                    category="Appliances" 
+                    products={applianceProducts} 
+                  />
+                  <ProductsDisplay 
+                    title="Latest in Musical Instruments" 
+                    category="Musical_Instruments" 
+                    products={musicalProducts} 
+                  />
+
+                  <ProductsDisplay 
+                    title="Latest in Videogames" 
+                    category="Videogames" 
+                    products={videoGameProducts} 
+                  />
+                </>
+              )}
+            </div>
+          </div>
+          <ChatBubble
+            onClick={toggleChat}
+            isOpen={showChat}
+            queryEndpoint="/chat/query"
+            highlightedReviewIds={[]}
+            onResponse={(botAnswer) => {
+              if (botAnswer.answer.response === "No products found.") {
+                
+              } else {
+                if (botAnswer.products) {
+                  setProducts(botAnswer.products);
+                }
+              }
+            }}
+            scrollToHighlightedReview={() => {}}
+          />
+        </>
+      )}
     </div>
-    
   );
 };
 

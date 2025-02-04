@@ -164,9 +164,9 @@ class EdenAIChatService:
 
             products = response.json().get("products", [])
             if not products:
-                return {"response": "No products found."}
+                return "No products found."
 
-            return {"response": "Products found.", "products": products}
+            return {"answer": "Products found.", "products": products}
 
         except requests.exceptions.RequestException as e:
             return {"error": f"Error during product request: {e}"}
