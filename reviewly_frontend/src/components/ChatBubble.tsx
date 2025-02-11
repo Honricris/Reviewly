@@ -28,9 +28,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
     setMessages([initialMessage]);
   }, []);
 
+
+
+
   const sendMessage = async () => {
     if (!currentMessage.trim()) return;
-
+  
     const userMessage = {
       sender: 'user' as const,
       text: currentMessage,
@@ -39,30 +42,55 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
     setMessages((prev) => [...prev, userMessage]);
     setCurrentMessage('');
     setIsLoading(true);
-
+  
     try {
-      const botAnswer = await chatService.queryChat(currentMessage, queryEndpoint);
-      const botMessage = {
-        sender: 'bot' as const,
-        text: botAnswer.answer,
-        reviewIds: botAnswer.reviews, 
-        time: new Date().toLocaleTimeString(),
-        products: botAnswer.products,
-      };
-      setMessages((prev) => [...prev, botMessage]);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}${queryEndpoint}`;
 
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: currentMessage }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error en la respuesta: ${response.status} ${response.statusText}`);
+      }
       
+      if (!response.body) throw new Error("No response body");
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      let botMessage = { sender: 'bot' as const, text: '', time: new Date().toLocaleTimeString() };
+  
+      setMessages((prev) => [...prev, botMessage]); 
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+  
+        if(chunk){
+          botMessage.text += chunk;
+          setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
+        }
+      }
+  
       if (onResponse) {
-        onResponse(botAnswer); 
+        onResponse(botMessage);
       }
     } catch (error) {
-      const botMessage = {
-        sender: 'bot' as const,
-        text: 'There was an error processing your request.',
-        time: new Date().toLocaleTimeString(),
-      };
-      setMessages((prev) => [...prev, botMessage]);
-    } finally {
+      console.error("Error in sendMessage:", error);
+      
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'bot', text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, time: new Date().toLocaleTimeString() }
+      ]);
+    }finally {
       setIsLoading(false);
     }
   };

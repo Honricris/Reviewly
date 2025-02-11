@@ -95,7 +95,7 @@ const ProductsMenu: React.FC = () => {
             queryEndpoint="/chat/query"
             highlightedReviewIds={[]}
             onResponse={(botAnswer) => {
-              if (botAnswer.answer.response === "No products found.") {
+              if (botAnswer.text === "No products found.") {
                 
               } else {
                 if (botAnswer.products) {

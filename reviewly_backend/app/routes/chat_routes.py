@@ -1,6 +1,7 @@
 from flask_restx import Namespace, Resource, fields
 from app.services.chat_service import EdenAIChatService
 from app.services.review_service import get_reviews_by_embedding
+from flask import Response
 
 api = Namespace('chat', description='Chat related operations')
 eden_chat_service = EdenAIChatService()
@@ -12,7 +13,7 @@ query_payload = api.model('QueryPayload', {
 
 @api.route('/query')
 class GeneralQuery(Resource):
-    @api.expect(query_payload) 
+    @api.expect(query_payload)
     def post(self):
         data = api.payload
         question = data.get('prompt')
@@ -20,13 +21,19 @@ class GeneralQuery(Resource):
         if not question:
             return {"error": "No question provided"}, 400
 
-        answer = eden_chat_service.ask_general_question(question)
+        try:
+            return Response(self.generate_stream(question), content_type='text/plain;charset=utf-8', status=200)
+        except Exception as e:
+            return {"error": str(e)}, 500
 
-        if isinstance(answer, dict) and "error" in answer:
-            return {"error": answer["error"]}, 500
+    def generate_stream(self, question):
+        """Genera el streaming de respuestas conforme se reciben."""
+        try:
+            for response_text in eden_chat_service.ask_general_question_streaming(question):
+                yield response_text
+        except Exception as e:
+            yield f"Error en el streaming: {str(e)}\n"
 
-       
-        return answer
 
 
 @api.route('/product/<int:product_id>')

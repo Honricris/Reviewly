@@ -11,9 +11,50 @@ class EdenAIChatService:
     def __init__(self):
         self.api_url = os.getenv("EDEN_API_URL")
         self.headers = {
-            "Authorization": f"Bearer {os.getenv('EDEN_API_TOKEN')}"
+            "Authorization": f"Bearer {os.getenv('EDEN_API_TOKEN')}",
+            "accept": "application/json",
+            "content-type": "application/json"
         }
 
+    def ask_general_question_streaming(self, prompt):
+        """Sends a request to Eden AI and retrieves the streaming response."""
+        url = "https://api.edenai.run/v2/text/chat/stream"  
+        payload = {
+            "response_as_dict": True,
+            "attributes_as_list": False,
+            "show_base_64": True,
+            "show_original_response": False,
+            "temperature": 0,
+            "max_tokens": 100,
+            "tool_choice": "auto",
+            "fallback_type": "continue",
+            "providers": ["openai/gpt-4o-mini"],
+            "text": prompt,
+            "chatbot_global_action": "You are an agent for an online shopping store. ",
+            "previous_history": []
+        }
+
+        try:
+            # Realiza la llamada a la API de Eden AI
+            response = requests.post(url, json=payload, headers=self.headers, stream=True)
+            response.raise_for_status()
+
+            # Procesa las respuestas streaming
+            for line in response.iter_lines(decode_unicode=True):
+                if line:
+                    try:
+                        data = json.loads(line)
+                        text = data.get("text")
+                        if text:
+                            yield text  
+                    except Exception as e:
+                        print(f"Error procesando línea: {e}")
+
+        except requests.exceptions.RequestException as e:
+            yield f"Error during request to Eden AI: {e}"
+
+        except requests.exceptions.RequestException as e:
+            yield f"Error during request to Eden AI: {e}"
 
     def send_request_to_eden_ai(self, prompt):
         """Sends a request to Eden AI and retrieves the response."""
@@ -60,7 +101,7 @@ class EdenAIChatService:
         """Asks a question to the LLM model and executes functions if necessary."""
 
         categories = self.get_categories()
-        prompt_with_fields = f"""You are an agent for an online shopping store. The user has entered the following prompt: 
+        prompt_with_fields = f"""The user has entered the following prompt: 
 
         {prompt}
 
