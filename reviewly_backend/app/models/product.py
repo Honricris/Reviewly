@@ -2,7 +2,8 @@ from app import db
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from sqlalchemy.orm import relationship
-
+from app.models.productdetail import ProductDetail
+from app.models.review import Review
 class Product(db.Model):
     __tablename__ = 'products'
 
@@ -27,8 +28,14 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 
+
+    features_list = relationship("ProductFeature", back_populates="product", cascade="all, delete-orphan")
+
     #Relacion con reviews 
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
+
+    # EAlmacenamos los details a parte
+    details_list = relationship("ProductDetail", back_populates="product", cascade="all, delete-orphan")
 
     # Constraints
     __table_args__ = (

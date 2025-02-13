@@ -1,8 +1,10 @@
 from app.models.product import Product
 from app import db
 from sqlalchemy.orm import joinedload
-
-
+from app.utils.model_loader import get_model
+from app.models.productdetail import ProductDetail
+from app.models.productfeature import ProductFeature
+model = get_model()
 
 def get_all_products(category=None, price_min=None, price_max=None, name=None, page=1, limit=43):
     if page is None:
@@ -80,13 +82,11 @@ def get_product_by_id(product_id: int) -> dict:
     Returns:
         dict: Diccionario con la información del producto en formato JSON o `None` si no se encuentra.
     """
-    # Buscar el producto en la base de datos por su ID
     product = Product.query.get(product_id)
 
     if not product:
         return None
 
-    # Convertir el producto a un formato serializable
     return {
         "product_id": product.product_id,
         "title": product.title,
@@ -106,9 +106,11 @@ def get_product_by_id(product_id: int) -> dict:
         "bought_together": product.bought_together,
         "amazon_link": product.amazon_link
     }
+
+
 def create_product(data: dict) -> dict:
     """
-    Crea uno o varios productos en la base de datos.
+    Crea uno o varios productos en la base de datos junto con sus detalles y características.
     
     Args:
         data (dict): Diccionario con los datos de los productos. 
@@ -119,12 +121,10 @@ def create_product(data: dict) -> dict:
     """
     created_products = []
 
-    # Asegurar que se puede procesar tanto un solo producto como múltiples productos
     if isinstance(data, dict):
         data = [data]
 
     for product_data in data:
-        # Crear instancia del producto
         product = Product(
             title=product_data.get("title"),
             main_category=product_data.get("main_category"),
@@ -145,14 +145,60 @@ def create_product(data: dict) -> dict:
         )
 
         product.generate_amazon_link()
-        
+
         db.session.add(product)
+        db.session.flush()  
+
+        # Añadir ProductDetails
+        if product.details:
+            for key, value in product.details.items():
+                detail_text = f"{key}: {value}"
+                
+                try:
+                    embedding = model.encode([detail_text])[0]  
+
+                    new_detail = ProductDetail(
+                        product_id=product.product_id,
+                        detail=detail_text,
+                        detail_embedding=embedding.tolist()
+                    )
+                    db.session.add(new_detail)
+                    print(f"Detalle añadido para producto ID: {product.product_id}")
+
+                except Exception as embed_error:
+                    print(f"Error al generar embedding para producto ID: {product.product_id}, detalle: {detail_text}")
+                    print(f"Detalles del error: {embed_error}")
+                    continue  
+
+        # Añadir ProductFeatures
+        if product.features:
+            for feature in product.features:
+                try:
+                    # Generar embedding para la feature
+                    embedding = model.encode([feature])[0]  
+
+                    new_feature = ProductFeature(
+                        product_id=product.product_id,
+                        feature=feature,
+                        embedding=embedding.tolist()  
+                    )
+                    db.session.add(new_feature)
+                    print(f"Feature añadida para producto ID: {product.product_id}")
+
+                except Exception as embed_error:
+                    print(f"Error al generar embedding para producto ID: {product.product_id}, feature: {feature}")
+                    print(f"Detalles del error: {embed_error}")
+                    continue  
+
         created_products.append(product)
 
-    # Confirmar los cambios en la base de datos
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as commit_error:
+        print(f"Error al guardar productos: {commit_error}")
+        db.session.rollback()
+        return {"error": "No se pudo crear el producto."}
 
-    # Retornar los productos creados en formato serializable
     return {
         "created_products": [
             {

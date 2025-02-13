@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.models.review import Review
 from app.models.product import Product
+
 from app.models.amazonuser import AmazonUser
 from sentence_transformers import SentenceTransformer
 import os

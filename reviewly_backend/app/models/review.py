@@ -2,7 +2,6 @@ from sqlalchemy import (
     Column, Integer, String, Text, Numeric, Boolean, ForeignKey, JSON, TIMESTAMP, func
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.types import UserDefinedType
 from app import db
 
@@ -30,7 +29,7 @@ class Review(db.Model):
     created_at = Column(TIMESTAMP, default=func.now())
     asin = Column(String(255))  
     parent_asin = Column(String(255)) 
-    embedding = Column(Vector, nullable=True)  # Campo para almacenar embeddings como vector(8192)
+    embedding = Column(Vector, nullable=True)  
 
     # Relación con la tabla de productos
     product = relationship("Product", back_populates="reviews", lazy=True)

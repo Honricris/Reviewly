@@ -2,13 +2,13 @@ from app.models.review import Review
 from app.models.product import Product
 from datetime import datetime
 from app.models.amazonuser import AmazonUser
+from app.utils.model_loader import get_model
 
 from app import db
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import  IntegrityError
 from sqlalchemy import text
-from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("blevlabs/stella_en_v5", trust_remote_code=True)
+model = get_model()
 
 def get_reviews_by_product(product_id, limit=10, offset=0):
     try:

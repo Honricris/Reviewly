@@ -44,6 +44,7 @@ def create_app():
     # Verificar la conexión a la base de datos
     with app.app_context():
         try:
+            db.create_all()
             db.session.execute(text('SELECT 1'))
             print("Conexión exitosa a la base de datos")
         except Exception as e:
