@@ -4,6 +4,7 @@ import time
 from dotenv import load_dotenv
 from flask import request, jsonify
 import json
+from app.services.product_service import searchProduct
 
 load_dotenv()
 
@@ -15,6 +16,8 @@ class EdenAIChatService:
             "accept": "application/json",
             "content-type": "application/json"
         }
+
+        self.searchProduct = searchProduct
 
     def ask_general_question_streaming(self, prompt):
         """Sends a request to Eden AI and retrieves the streaming response."""
@@ -31,30 +34,61 @@ class EdenAIChatService:
             "providers": ["openai/gpt-4o-mini"],
             "text": prompt,
             "chatbot_global_action": "You are an agent for an online shopping store. ",
-            "previous_history": []
+            "previous_history": [],
+            "available_tools": [
+            {
+                "name": "searchProduct",
+                "description": "Searches for the most relevant products based on a query by calculating similarity scores across titles, descriptions, product details, and features.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "The search query used to find relevant products."
+                        },
+                        "top_n": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 5,
+                            "description": "The number of top products to return, ranked by relevance score."
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
+        ] # type: ignore
         }
 
         try:
+            print("Enviando solicitud a Eden AI...")
             # Realiza la llamada a la API de Eden AI
             response = requests.post(url, json=payload, headers=self.headers, stream=True)
             response.raise_for_status()
-
+            print("Respuesta recibida correctamente.")
+            
             # Procesa las respuestas streaming
             for line in response.iter_lines(decode_unicode=True):
                 if line:
+                    print(f"Procesando línea: {line}")
                     try:
                         data = json.loads(line)
                         text = data.get("text")
                         if text:
-                            yield text  
+                            print(f"Texto recibido: {text}")
+                            yield text
+                        else:
+                            print("No se encontró texto en la respuesta.")
                     except Exception as e:
                         print(f"Error procesando línea: {e}")
 
         except requests.exceptions.RequestException as e:
-            yield f"Error during request to Eden AI: {e}"
+            print(f"Error durante la solicitud a Eden AI: {e}")
+            yield f"Error durante solicitud a Eden AI: {e}"
 
-        except requests.exceptions.RequestException as e:
-            yield f"Error during request to Eden AI: {e}"
+        except Exception as e:
+            print(f"Ocurrió un error inesperado: {e}")
+            yield f"Ocurrió un error inesperado: {e}"
 
     def send_request_to_eden_ai(self, prompt):
         """Sends a request to Eden AI and retrieves the response."""

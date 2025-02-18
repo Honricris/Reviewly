@@ -1,6 +1,6 @@
 from flask_restx import Namespace, Resource, fields
 from app.services.product_service import (
-    get_all_products, get_product_by_id, create_product, update_product, delete_product, get_all_categories
+    get_all_products, get_product_by_id, create_product, update_product, delete_product, get_all_categories,searchProduct
 )
 from app.services.review_service import get_reviews_by_product
 from flask import request
@@ -77,6 +77,30 @@ class Product(Resource):
         if not success:
             return {"error": "Product not found"}, 404
         return {"message": "Product deleted"}, 200
+
+
+
+
+product_search_model = api.model('ProductSearch', {
+    'query': fields.String(required=True, description='Search query for products', example="Smartphone with good camera"),
+    'top_n': fields.Integer(required=False, description='Number of top products to return', example=5, default=5)
+})
+
+
+@api.route('/search')
+class ProductSearch(Resource):
+    @api.expect(product_search_model)
+    def post(self):
+        data = request.json
+        query = data.get('query')
+        top_n = data.get('top_n', 5)
+        
+        if not query:
+            return {"error": "Query parameter is required."}, 400
+        
+        result = searchProduct(query, top_n)
+        return result, 200
+    
 
 
 @api.route('/categories')
