@@ -110,6 +110,8 @@ def get_product_by_id(product_id: int) -> dict:
 
 def searchProduct(query: str, top_n=5):
     # Generar embedding para la frase de búsqueda
+    #TODO Juntar consultas
+    #TODO Diagrama con codigo.
     query_embedding = model.encode([query]).tolist()[0]  # Convertir a lista para usar en la consulta
 
     # 1. Buscar los 30 productos cuyo título coincida parcialmente y sumar puntos

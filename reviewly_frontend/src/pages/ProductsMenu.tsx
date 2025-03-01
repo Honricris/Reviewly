@@ -23,6 +23,16 @@ const ProductsMenu: React.FC = () => {
     setShowChat((prev) => !prev);
   };
 
+
+  const setGridMinHeight = () => {
+    const grid = document.querySelector('.products-grid') as HTMLElement;
+    if (!grid) return;
+
+    const currentHeight = grid.offsetHeight;
+    grid.style.minHeight = `${currentHeight}px`;
+  };
+
+  
   useEffect(() => {
     const delaySearch = setTimeout(async () => {
       console.log(searchQuery)
@@ -30,6 +40,8 @@ const ProductsMenu: React.FC = () => {
         setProducts([]); 
         return;
       }
+
+      setGridMinHeight();
 
       const fetchedProducts = await getProducts(1, 70, undefined, searchQuery);
       setProducts(fetchedProducts.products);

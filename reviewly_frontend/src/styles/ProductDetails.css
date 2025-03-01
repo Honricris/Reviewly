@@ -223,7 +223,8 @@ product-details h2 {
 .review-card {
   flex: 0 0 auto;
   width: 300px;
-  max-height: 340px;
+
+  height: 340px;
   padding: 15px;
   background: #fff;
   border-radius: 10px;

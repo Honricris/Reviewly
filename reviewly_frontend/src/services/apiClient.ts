@@ -5,7 +5,6 @@ const apiClient = axios.create({
   timeout: 30000,
 });
 
-// Añadir interceptores para registrar las solicitudes y respuestas
 apiClient.interceptors.request.use((config) => {
   console.log('Realizando solicitud:', config.method?.toUpperCase(), config.url);
   console.log('Datos de la solicitud:', config.data);

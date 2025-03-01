@@ -4,6 +4,16 @@ import '../styles/ChatBubble.css';
 import chatService from '../services/chatService';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'; 
 import ChatIcon from '@mui/icons-material/Chat';
+import ReactMarkdown from 'react-markdown';
+
+const BotMessage = ({ text }) => {
+  return (
+    <div className="bot-message">
+      <ReactMarkdown>{text}</ReactMarkdown>
+    </div>
+  );
+};
+
 
 interface ChatBubbleProps {
   onClick: () => void;
@@ -22,7 +32,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
   useEffect(() => {
     const initialMessage = {
       sender: 'bot' as const,
-      text: 'Hello! I am your virtual assistant. How can I assist you today?',
+      text: "Hello! I am your virtual shopping assistant. I can help you find the perfect product and provide detailed information about our items. How can I assist you today?",
       time: new Date().toLocaleTimeString(),
     };
     setMessages([initialMessage]);
@@ -117,7 +127,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
                   <span className="message-sender">{message.sender === 'user' ? '👤 User' : '🤖 Chat Bot'}</span>
                   <span className="message-time">{message.time}</span>
                 </div>
-                <div className="message-text">{message.text}</div>
+                {message.sender === 'bot' ? <BotMessage text={message.text} /> : <div className="message-text">{message.text}</div>}
                 {/* Mostrar botones solo para el último mensaje del bot */}
                 {message.sender === 'bot' && highlightedReviewIds.length > 0 && index === messages.length - 1 && (
                   <div className="highlighted-reviews-buttons">
