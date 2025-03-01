@@ -8,7 +8,9 @@ eden_chat_service = EdenAIChatService()
 chat_service = ChatService()
 
 query_payload = api.model('QueryPayload', {
-    'prompt': fields.String(required=True, description='The question or prompt to be answered')
+    'prompt': fields.String(required=True, description='The question or prompt to be answered'),
+    'product_id': fields.String(required=True, description='The id of the specific product if we are in the product details page')
+
 })
 
 @api.route('/query')
@@ -30,33 +32,9 @@ class GeneralQuery(Resource):
     def generate_stream(self, question, product_id=None):
         """Genera el streaming de respuestas conforme se reciben."""
         try:
-            for response_text in chat_service.ask_general_question(question, product_id):
+            for response_text in chat_service.ask_question(question, product_id):
                 yield response_text
         except Exception as e:
             yield f"Error en el streaming: {str(e)}\n"
 
 
-
-# @api.route('/product/<int:product_id>')
-# class ProductQuery(Resource):
-#     @api.expect(query_payload)  
-#     def post(self, product_id):
-#         data = api.payload
-#         question = data.get('prompt')
-
-#         if not question:
-#             return {"error": "No question provided"}, 400
-        
-#         reviews = get_reviews_by_embedding(question, product_id)
-
-#         if not reviews:
-#             return {"error": "No reviews found for the product"}, 404
-
-#         reviews_text = [review.text for review in reviews]
-#         answer = eden_chat_service.ask_based_on_reviews(reviews_text, question)
-#         review_ids = [review.review_id for review in reviews]
-
-#         return {
-#             "answer": answer,
-#             "reviews": review_ids
-#         }

@@ -1,8 +1,6 @@
-import apiClient from './apiClient';
-
 interface ChatResponse {
-  answer: string;    
-  reviews: number[]; 
+  answer: string;
+  reviews: number[];
   products: {
     product_id: number;
     title: string;
@@ -15,13 +13,35 @@ interface ChatResponse {
   }[];
 }
 
-
 const chatService = {
-  async queryChat(prompt: string, endpoint: string = '/chat/query'): Promise<ChatResponse> {
+  async queryChat(
+    prompt: string,
+    productId?: string,
+    endpoint: string = '/chat/query'
+  ): Promise<ReadableStreamDefaultReader> {
     try {
-      const requestData = { prompt };
-      const response = await apiClient.post<ChatResponse>(endpoint, requestData);
-      return response.data; 
+      const requestData = productId ? { prompt, product_id: productId } : { prompt };
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}${endpoint}`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error en la respuesta: ${response.status} ${response.statusText}`);
+      }
+
+      if (!response.body) {
+        throw new Error("No se recibió un cuerpo de respuesta.");
+      }
+
+      return response.body.getReader();  
     } catch (error) {
       console.error('Error al comunicarse con el chat:', error);
       throw new Error('No se pudo obtener una respuesta del chat.');

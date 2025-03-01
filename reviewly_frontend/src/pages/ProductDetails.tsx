@@ -251,7 +251,7 @@ const ProductDetails: React.FC = () => {
       <ChatBubble 
         onClick={() => setIsChatOpen(!isChatOpen)} 
         isOpen={isChatOpen} 
-        queryEndpoint={`/chat/product/${id}`} 
+        productId={id} 
         onResponse={handleChatResponse}
         highlightedReviewIds={highlightedReviewIds}
         scrollToHighlightedReview={scrollToHighlightedReview}

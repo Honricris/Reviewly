@@ -18,13 +18,13 @@ const BotMessage = ({ text }) => {
 interface ChatBubbleProps {
   onClick: () => void;
   isOpen: boolean;
-  queryEndpoint: string;
+  productId?: string;
   onResponse?: (botAnswer: any) => void; 
   highlightedReviewIds: number[];
   scrollToHighlightedReview: (reviewId: number) => void;
 }
 
-const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint, onResponse, highlightedReviewIds, scrollToHighlightedReview }) => {
+const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, highlightedReviewIds, scrollToHighlightedReview }) => {
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[] }[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +41,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
 
 
 
+  
   const sendMessage = async () => {
     if (!currentMessage.trim()) return;
   
@@ -54,37 +55,22 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
     setIsLoading(true);
   
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      const apiUrl = `${baseUrl}${queryEndpoint}`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: currentMessage }),
-      });
+   
   
-      if (!response.ok) {
-        throw new Error(`Error en la respuesta: ${response.status} ${response.statusText}`);
-      }
-      
-      if (!response.body) throw new Error("No response body");
-  
-      const reader = response.body.getReader();
+      const reader = await chatService.queryChat(currentMessage, productId);
       const decoder = new TextDecoder();
-      
+  
       let botMessage = { sender: 'bot' as const, text: '', time: new Date().toLocaleTimeString() };
   
-      setMessages((prev) => [...prev, botMessage]); 
+      setMessages((prev) => [...prev, botMessage]);
   
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+  
         const chunk = decoder.decode(value, { stream: true });
   
-        if(chunk){
+        if (chunk) {
           botMessage.text += chunk;
           setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
         }
@@ -95,12 +81,12 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, queryEndpoint,
       }
     } catch (error) {
       console.error("Error in sendMessage:", error);
-      
+  
       setMessages((prev) => [
         ...prev,
         { sender: 'bot', text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, time: new Date().toLocaleTimeString() }
       ]);
-    }finally {
+    } finally {
       setIsLoading(false);
     }
   };
