@@ -20,11 +20,11 @@ interface ChatBubbleProps {
   isOpen: boolean;
   productId?: string;
   onResponse?: (botAnswer: any) => void; 
-  highlightedReviewIds: number[];
-  scrollToHighlightedReview: (reviewId: number) => void;
+  scrollToHighlightedReview?: (reviewId: number) => void;
+
 }
 
-const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, highlightedReviewIds, scrollToHighlightedReview }) => {
+const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, scrollToHighlightedReview }) => {
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[] }[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -55,12 +55,16 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
     setIsLoading(true);
   
     try {
-   
-  
       const reader = await chatService.queryChat(currentMessage, productId);
       const decoder = new TextDecoder();
   
-      let botMessage = { sender: 'bot' as const, text: '', time: new Date().toLocaleTimeString() };
+      let botMessage = { 
+        sender: 'bot' as const, 
+        text: '', 
+        time: new Date().toLocaleTimeString(),
+        reviewIds: [] as number[],
+        products: [] as any[]
+      };
   
       setMessages((prev) => [...prev, botMessage]);
   
@@ -71,20 +75,33 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
         const chunk = decoder.decode(value, { stream: true });
   
         if (chunk) {
-          botMessage.text += chunk;
-          setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
+          try {
+            const parsedChunk = JSON.parse(chunk);
+            if (parsedChunk.type === 'additional_data') {
+              botMessage.reviewIds = parsedChunk.data.review_ids || [];
+            }if (parsedChunk.data.products) {
+              botMessage.products = parsedChunk.data.products;
+            } else {
+              botMessage.text += chunk;
+            }
+            setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
+          } catch (error) {
+            botMessage.text += chunk;
+            setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
+          }
         }
       }
-  
-      if (onResponse) {
-        onResponse(botMessage);
+      if (botMessage.products.length > 0 && onResponse) {
+        onResponse({ products: botMessage.products });
+      } else if (botMessage.reviewIds.length > 0 && onResponse) {
+        onResponse({ reviews: botMessage.reviewIds });
       }
+      
     } catch (error) {
       console.error("Error in sendMessage:", error);
-  
       setMessages((prev) => [
         ...prev,
-        { sender: 'bot', text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, time: new Date().toLocaleTimeString() }
+        { sender: 'bot', text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, time: new Date().toLocaleTimeString(), reviewIds: [] }
       ]);
     } finally {
       setIsLoading(false);
@@ -107,28 +124,25 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
             </button>
           </div>
           <div className="chat-messages">
-            {messages.map((message, index) => (
-              <div key={index} className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-                <div className="message-header">
-                  <span className="message-sender">{message.sender === 'user' ? '👤 User' : '🤖 Chat Bot'}</span>
-                  <span className="message-time">{message.time}</span>
-                </div>
-                {message.sender === 'bot' ? <BotMessage text={message.text} /> : <div className="message-text">{message.text}</div>}
-                {/* Mostrar botones solo para el último mensaje del bot */}
-                {message.sender === 'bot' && highlightedReviewIds.length > 0 && index === messages.length - 1 && (
-                  <div className="highlighted-reviews-buttons">
-                    {highlightedReviewIds.map((reviewId, buttonIndex) => (
-                      <button 
-                        key={buttonIndex} 
-                        onClick={() => scrollToHighlightedReview(reviewId)}
-                      >
-                        Go to Review {buttonIndex + 1}
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {messages.map((message, index) => (
+            <div key={index} className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
+              <div className="message-header">
+                <span className="message-sender">{message.sender === 'user' ? '👤 User' : '🤖 Chat Bot'}</span>
+                <span className="message-time">{message.time}</span>
               </div>
-            ))}
+              {message.sender === 'bot' ? <BotMessage text={message.text} /> : <div className="message-text">{message.text}</div>}
+              
+              {message.sender === 'bot' && message.reviewIds && message.reviewIds.length > 0 && (
+                <div className="highlighted-reviews-buttons">
+                  {message.reviewIds.map((reviewId, buttonIndex) => (
+                    <button key={buttonIndex} onClick={() => scrollToHighlightedReview(reviewId)}>
+                      Go to Review {buttonIndex + 1}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
             {isLoading && (
               <div className="chat-message bot-message">
                 <div className="message-text">

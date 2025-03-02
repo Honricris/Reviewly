@@ -201,6 +201,10 @@ def searchProduct(query: str, top_n=5):
     # Construir respuesta con los puntajes detallados
     result = []
     for product in products:
+
+        large_images = [img.get("large") for img in product.images if isinstance(img, dict) and "large" in img] if product.images else []
+
+
         result.append({
             "product_id": product.product_id,
             "title": product.title,
@@ -209,7 +213,7 @@ def searchProduct(query: str, top_n=5):
             "rating_number": product.rating_number,
             "price": product.price,
             "store": product.store,
-            "images": product.images,
+            "images": large_images,
             "scores": {
                 "title_score": title_score_map.get(product.product_id, 0),
                 "detail_score": detail_score_map.get(product.product_id, 0),

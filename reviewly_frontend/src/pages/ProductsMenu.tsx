@@ -104,8 +104,6 @@ const ProductsMenu: React.FC = () => {
           <ChatBubble
             onClick={toggleChat}
             isOpen={showChat}
-            queryEndpoint="/chat/query"
-            highlightedReviewIds={[]}
             onResponse={(botAnswer) => {
               if (botAnswer.text === "No products found.") {
                 
@@ -115,7 +113,6 @@ const ProductsMenu: React.FC = () => {
                 }
               }
             }}
-            scrollToHighlightedReview={() => {}}
           />
         </>
       )}

@@ -91,6 +91,7 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleChatResponse = (botAnswer: { answer: string; reviews: number[] }) => {
+    
     setHighlightedReviewIds(botAnswer.reviews || []);
   };
 
@@ -253,7 +254,6 @@ const ProductDetails: React.FC = () => {
         isOpen={isChatOpen} 
         productId={id} 
         onResponse={handleChatResponse}
-        highlightedReviewIds={highlightedReviewIds}
         scrollToHighlightedReview={scrollToHighlightedReview}
       />
     </div>

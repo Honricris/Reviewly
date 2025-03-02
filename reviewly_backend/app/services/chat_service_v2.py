@@ -154,6 +154,11 @@ class ChatService:
                                         responses = self._handle_tool_calls(list(tool_calls_buffer.values()))
                                         for response in responses:
                                             self.messages.append({"role": "tool", "name": response["name"], "tool_call_id": response["id"], "content": response["content"]})
+                                            if response.get("additional_data"):
+                                                yield json.dumps({
+                                                    "type": "additional_data",
+                                                    "data": response["additional_data"]
+                                                })
                                         yield from self.ask_question() 
 
                                     if "choices" in data_obj and data_obj["choices"][0]["delta"].get("content"):
@@ -198,10 +203,13 @@ class ChatService:
                     
 
                     response = self.tool_functions[function_name](args)
+                    response_data = json.loads(response)
                     responses.append({
                         "id": tool_call["id"],
                         "name": function_name,
-                        "content": response
+                        "content":  response_data["response_text"],
+                        "additional_data": response_data.get("additional_data", {})  
+
                     })
                 except json.JSONDecodeError:
                     print(f"Error al decodificar argumentos para {function_name}: {tool_call['arguments']}")
@@ -216,11 +224,22 @@ class ChatService:
         
         response.pop('query', None)
         
-        for product in response.get('top_products', []):
-            product.pop('images', None)
-            product.pop('product_id', None)
+        products = response.get('top_products', [])
+
+        modified_products = []
+        for product in products:
+            modified_product = product.copy() 
+            modified_product.pop('images', None)
+            modified_product.pop('product_id', None)
+            modified_products.append(modified_product)
+
         
-        return json.dumps(response)
+        return json.dumps({
+            "response_text": json.dumps(modified_products), 
+            "additional_data": {
+                "products": products
+            }
+        })
     
     def _handle_get_reviews_by_embedding(self, args):
         query_text = args["query_text"]
@@ -230,8 +249,8 @@ class ChatService:
         if product_id:
             app = create_app()
             with app.app_context():
-                reviews = get_reviews_by_embedding(query_text, product_id, top_k=3
-                                               )
+                reviews = get_reviews_by_embedding(query_text, product_id, top_k=3)
+        
         elif product_name_or_description:
             app = create_app()
             with app.app_context():
@@ -245,6 +264,14 @@ class ChatService:
         else:
             return json.dumps({"error": "Faltan argumentos: se requiere product_id o product_name_or_description."})
         
+
+        review_ids = [review.review_id for review in reviews] if reviews else []
+
         reviews_text = "\n".join([review.text for review in reviews]) if reviews else "No hay reviews disponibles."
         
-        return reviews_text
+        return json.dumps({
+            "response_text": reviews_text,
+            "additional_data": {
+                "review_ids": review_ids
+            }
+        })

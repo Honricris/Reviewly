@@ -208,7 +208,7 @@ def get_reviews_by_embedding(query_text, product_id, top_k=3):
         ).params(query_embedding=query_embedding_array, product_id=product_id, top_k=top_k).all()
 
 
-        print(f"ESTO ES LO QUE DEVUELVO: {result}")
+        # print(f"ESTO ES LO QUE DEVUELVO: {result}")
         return result
 
     except Exception as e:

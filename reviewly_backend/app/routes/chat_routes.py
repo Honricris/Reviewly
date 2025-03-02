@@ -1,10 +1,8 @@
 from flask_restx import Namespace, Resource, fields
-from app.services.chat_service import EdenAIChatService
 from app.services.chat_service_v2 import ChatService
 from flask import Response
 
 api = Namespace('chat', description='Chat related operations')
-eden_chat_service = EdenAIChatService()
 chat_service = ChatService()
 
 query_payload = api.model('QueryPayload', {
