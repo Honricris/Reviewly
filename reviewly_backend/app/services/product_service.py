@@ -109,101 +109,61 @@ def get_product_by_id(product_id: int) -> dict:
     }
 
 def searchProduct(query: str, top_n=5):
-    # Generar embedding para la frase de búsqueda
-    #TODO Juntar consultas
-    #TODO Diagrama con codigo.
-    query_embedding = model.encode([query]).tolist()[0]  # Convertir a lista para usar en la consulta
+    # TODO Documentarlo
+    query_embedding = model.encode([query]).tolist()[0] 
 
-    # 1. Buscar los 30 productos cuyo título coincida parcialmente y sumar puntos
-    tle_matches = db.session.execute(
-    text("""
+    combined_query = db.session.execute(
+        text("""
+        WITH title_matches AS (
             SELECT product_id, title, description,
-                (SIMILARITY(title, :query) * 70 + 
-                SIMILARITY(COALESCE(CAST(description AS TEXT), ''), :query) * 30) AS total_score
+                   (SIMILARITY(title, :query) * 70 + 
+                   SIMILARITY(COALESCE(CAST(description AS TEXT), ''), :query) * 30) AS title_score
             FROM products
             WHERE SIMILARITY(title, :query) > 0.05
             OR SIMILARITY(COALESCE(CAST(description AS TEXT), ''), :query) > 0.05
-            ORDER BY total_score DESC
+            ORDER BY title_score DESC
             LIMIT 30
-            """),
-        {'query': query}
+        ),
+        detail_scores AS (
+            SELECT pd.product_id, 
+                   SUM(1 - (pd.detail_embedding <=> CAST(:query_embedding AS vector))) AS detail_score
+            FROM product_details pd
+            WHERE pd.product_id IN (SELECT product_id FROM title_matches)
+            GROUP BY pd.product_id
+        ),
+        feature_scores AS (
+            SELECT pf.product_id, 
+                   SUM(1 - (pf.embedding <=> CAST(:query_embedding AS vector))) AS feature_score
+            FROM product_features pf
+            WHERE pf.product_id IN (SELECT product_id FROM title_matches)
+            GROUP BY pf.product_id
+        )
+        SELECT tm.product_id, tm.title, tm.description,
+               tm.title_score, 
+               COALESCE(ds.detail_score, 0) AS detail_score,
+               COALESCE(fs.feature_score, 0) AS feature_score,
+               (tm.title_score * 0.7 + COALESCE(ds.detail_score, 0) * 0.2 + COALESCE(fs.feature_score, 0) * 0.1) AS total_score
+        FROM title_matches tm
+        LEFT JOIN detail_scores ds ON tm.product_id = ds.product_id
+        LEFT JOIN feature_scores fs ON tm.product_id = fs.product_id
+        ORDER BY total_score DESC
+        LIMIT :top_n
+        """),
+        {'query': query, 'query_embedding': query_embedding, 'top_n': top_n}
     ).fetchall()
-    # Obtener los IDs de los 30 productos seleccionados
-    top_product_ids = [row.product_id for row in tle_matches]
 
-    if not top_product_ids:  # Si no hay coincidencias en título, devolver vacío
+    if not combined_query: 
         return {
             "query": query,
             "top_products": []
         }
 
-    # 2. Buscar en detalles de productos seleccionados y sumar puntos
-    detail_scores = db.session.execute(
-        text("""
-        SELECT pd.product_id, 
-               SUM(1 - (pd.detail_embedding <=> CAST(:query_embedding AS vector))) AS detail_score
-        FROM product_details pd
-        WHERE pd.product_id IN :product_ids
-        GROUP BY pd.product_id
-        """),
-        {"query_embedding": query_embedding, "product_ids": tuple(top_product_ids)}
-    ).fetchall()
-
-    # 3. Buscar en características de productos seleccionados y sumar puntos
-    feature_scores = db.session.execute(
-        text("""
-        SELECT pf.product_id, 
-               SUM(1 - (pf.embedding <=> CAST(:query_embedding AS vector))) AS feature_score
-        FROM product_features pf
-        WHERE pf.product_id IN :product_ids
-        GROUP BY pf.product_id
-        """),
-        {"query_embedding": query_embedding, "product_ids": tuple(top_product_ids)}
-    ).fetchall()
-
-    # 4. Sumar scores de título, detalles y características
-    product_scores = {}
-
-    # Sumar puntos por coincidencias en el título
-    title_score_map = {}
-    for row in tle_matches:
-        product_id, title, description, title_score = row
-        if product_id not in product_scores:
-            product_scores[product_id] = 0
-        product_scores[product_id] += title_score
-        title_score_map[product_id] = title_score
-
-    # Sumar puntos por detalles
-    detail_score_map = {}
-    for row in detail_scores:
-        product_id, detail_score = row
-        if product_id not in product_scores:
-            product_scores[product_id] = 0
-        product_scores[product_id] += detail_score
-        detail_score_map[product_id] = detail_score
-
-    # Sumar puntos por características
-    feature_score_map = {}
-    for row in feature_scores:
-        product_id, feature_score = row
-        if product_id not in product_scores:
-            product_scores[product_id] = 0
-        product_scores[product_id] += feature_score
-        feature_score_map[product_id] = feature_score
-
-    # 5. Ordenar por puntaje total y obtener los top_n productos
-    sorted_products = sorted(product_scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
-    product_ids = [product_id for product_id, _ in sorted_products]
-
-    # 6. Obtener información de los productos ordenados
+    product_ids = [row.product_id for row in combined_query]
     products = Product.query.filter(Product.product_id.in_(product_ids)).all()
 
-    # Construir respuesta con los puntajes detallados
     result = []
     for product in products:
-
         large_images = [img.get("large") for img in product.images if isinstance(img, dict) and "large" in img] if product.images else []
-
 
         result.append({
             "product_id": product.product_id,
@@ -215,10 +175,10 @@ def searchProduct(query: str, top_n=5):
             "store": product.store,
             "images": large_images,
             "scores": {
-                "title_score": title_score_map.get(product.product_id, 0),
-                "detail_score": detail_score_map.get(product.product_id, 0),
-                "feature_score": feature_score_map.get(product.product_id, 0),
-                "total_score": product_scores.get(product.product_id, 0)
+                "title_score": next((row.title_score for row in combined_query if row.product_id == product.product_id), 0),
+                "detail_score": next((row.detail_score for row in combined_query if row.product_id == product.product_id), 0),
+                "feature_score": next((row.feature_score for row in combined_query if row.product_id == product.product_id), 0),
+                "total_score": next((row.total_score for row in combined_query if row.product_id == product.product_id), 0)
             }
         })
 
@@ -226,7 +186,6 @@ def searchProduct(query: str, top_n=5):
         "query": query,
         "top_products": result
     }
-
 
 def create_product(data: dict) -> dict:
     """
