@@ -34,5 +34,3 @@ class GeneralQuery(Resource):
                 yield response_text
         except Exception as e:
             yield f"Error en el streaming: {str(e)}\n"
-
-

@@ -83,7 +83,10 @@ class Product(Resource):
 
 product_search_model = api.model('ProductSearch', {
     'query': fields.String(required=True, description='Search query for products', example="Smartphone with good camera"),
-    'top_n': fields.Integer(required=False, description='Number of top products to return', example=5, default=5)
+    'top_n': fields.Integer(required=False, description='Number of top products to return', example=5, default=5),
+    'category': fields.String(description='Main category of the product (e.g., electronics, clothing, books). Optional.'),
+    'min_price': fields.Float(description='Minimum price filter for the search results. Optional.'),
+    'max_price': fields.Float(description='Maximum price filter for the search results. Optional.')
 })
 
 
@@ -94,11 +97,16 @@ class ProductSearch(Resource):
         data = request.json
         query = data.get('query')
         top_n = data.get('top_n', 5)
+        category = data.get('category')
+        min_price = data.get('min_price')
+        max_price = data.get('max_price')
+        
         
         if not query:
             return {"error": "Query parameter is required."}, 400
         
-        result = searchProduct(query, top_n)
+        result = searchProduct(query, top_n, category, min_price, max_price)
+
         return result, 200
     
 

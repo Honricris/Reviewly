@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload
 from app.utils.model_loader import get_model
 from app.models.productdetail import ProductDetail
 from app.models.productfeature import ProductFeature
+from app.models.review import Review 
 model = get_model()
 
 def get_all_products(category=None, price_min=None, price_max=None, name=None, page=1, limit=43):
@@ -108,19 +109,34 @@ def get_product_by_id(product_id: int) -> dict:
         "amazon_link": product.amazon_link
     }
 
-def searchProduct(query: str, top_n=5):
-    # TODO Documentarlo
+def searchProduct(query: str, top_n=5, category: str = None, min_price: float = None, max_price: float = None):
     query_embedding = model.encode([query]).tolist()[0] 
-
+    
+    filters = ""
+    params = {'query': query, 'query_embedding': query_embedding, 'top_n': top_n}
+    
+    if category:
+        filters += " AND main_category = :category"
+        params['category'] = category
+    
+    if min_price is not None:
+        filters += " AND price >= :min_price"
+        params['min_price'] = min_price
+    
+    if max_price is not None:
+        filters += " AND price <= :max_price"
+        params['max_price'] = max_price
+    
     combined_query = db.session.execute(
-        text("""
+        text(f"""
         WITH title_matches AS (
-            SELECT product_id, title, description,
+            SELECT product_id, title, description, main_category, price,
                    (SIMILARITY(title, :query) * 70 + 
                    SIMILARITY(COALESCE(CAST(description AS TEXT), ''), :query) * 30) AS title_score
             FROM products
-            WHERE SIMILARITY(title, :query) > 0.05
-            OR SIMILARITY(COALESCE(CAST(description AS TEXT), ''), :query) > 0.05
+            WHERE (SIMILARITY(title, :query) > 0.05
+            OR SIMILARITY(COALESCE(CAST(description AS TEXT), ''), :query) > 0.05)
+            {filters}
             ORDER BY title_score DESC
             LIMIT 30
         ),
@@ -138,7 +154,7 @@ def searchProduct(query: str, top_n=5):
             WHERE pf.product_id IN (SELECT product_id FROM title_matches)
             GROUP BY pf.product_id
         )
-        SELECT tm.product_id, tm.title, tm.description,
+        SELECT tm.product_id, tm.title, tm.description, tm.main_category, tm.price,
                tm.title_score, 
                COALESCE(ds.detail_score, 0) AS detail_score,
                COALESCE(fs.feature_score, 0) AS feature_score,
@@ -149,22 +165,22 @@ def searchProduct(query: str, top_n=5):
         ORDER BY total_score DESC
         LIMIT :top_n
         """),
-        {'query': query, 'query_embedding': query_embedding, 'top_n': top_n}
+        params
     ).fetchall()
-
+    
     if not combined_query: 
         return {
             "query": query,
             "top_products": []
         }
-
+    
     product_ids = [row.product_id for row in combined_query]
     products = Product.query.filter(Product.product_id.in_(product_ids)).all()
-
+    
     result = []
     for product in products:
         large_images = [img.get("large") for img in product.images if isinstance(img, dict) and "large" in img] if product.images else []
-
+        
         result.append({
             "product_id": product.product_id,
             "title": product.title,
@@ -181,11 +197,12 @@ def searchProduct(query: str, top_n=5):
                 "total_score": next((row.total_score for row in combined_query if row.product_id == product.product_id), 0)
             }
         })
-
+    
     return {
         "query": query,
         "top_products": result
     }
+
 
 def create_product(data: dict) -> dict:
     """
@@ -204,6 +221,12 @@ def create_product(data: dict) -> dict:
         data = [data]
 
     for product_data in data:
+        title = product_data.get("title")
+
+        existing_product = Product.query.filter_by(title=title).first()
+        if existing_product:
+            return {"error": f"El producto con título '{title}' ya existe en la base de datos."}, 409
+
         product = Product(
             title=product_data.get("title"),
             main_category=product_data.get("main_category"),
@@ -337,16 +360,15 @@ def update_product(product_id: int, data: dict) -> dict:
         "amazon_link": product.amazon_link
     }
 
-
 def delete_product(product_id: int) -> bool:
     """
-    Elimina un producto existente en la base de datos.
+    Elimina un producto existente en la base de datos junto con sus detalles, características y reseñas asociadas.
 
     Args:
         product_id (int): ID del producto a eliminar.
 
     Returns:
-        bool: `True` si el producto fue eliminado, `False` si no se encontró.
+        bool: `True` si el producto y sus datos asociados fueron eliminados, `False` si no se encontró el producto.
     """
     # Buscar el producto en la base de datos por su ID
     product = Product.query.get(product_id)
@@ -354,11 +376,23 @@ def delete_product(product_id: int) -> bool:
     if not product:
         return False
 
-    db.session.delete(product)
-    db.session.commit()
+    try:
+        ProductDetail.query.filter_by(product_id=product_id).delete()
 
-    return True
+        ProductFeature.query.filter_by(product_id=product_id).delete()
 
+        Review.query.filter_by(product_id=product_id).delete()
+
+        db.session.delete(product)
+
+        db.session.commit()
+
+        return True
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al eliminar el producto y sus datos asociados: {e}")
+        return False
 
 
 def get_all_categories():

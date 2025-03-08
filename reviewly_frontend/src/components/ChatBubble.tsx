@@ -79,8 +79,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
             const parsedChunk = JSON.parse(chunk);
             if (parsedChunk.type === 'additional_data') {
               botMessage.reviewIds = parsedChunk.data.review_ids || [];
-            }if (parsedChunk.data.products) {
-              botMessage.products = parsedChunk.data.products;
+              botMessage.products = parsedChunk.data.products || [];
             } else {
               botMessage.text += chunk;
             }
@@ -91,12 +90,13 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
           }
         }
       }
+  
       if (botMessage.products.length > 0 && onResponse) {
         onResponse({ products: botMessage.products });
       } else if (botMessage.reviewIds.length > 0 && onResponse) {
         onResponse({ reviews: botMessage.reviewIds });
       }
-      
+  
     } catch (error) {
       console.error("Error in sendMessage:", error);
       setMessages((prev) => [
@@ -135,7 +135,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
               {message.sender === 'bot' && message.reviewIds && message.reviewIds.length > 0 && (
                 <div className="highlighted-reviews-buttons">
                   {message.reviewIds.map((reviewId, buttonIndex) => (
-                    <button key={buttonIndex} onClick={() => scrollToHighlightedReview(reviewId)}>
+                    <button key={buttonIndex} onClick={() => scrollToHighlightedReview?.(reviewId)}>
                       Go to Review {buttonIndex + 1}
                     </button>
                   ))}

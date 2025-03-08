@@ -8,7 +8,7 @@ import ChatBubble from '../components/ChatBubble';
 import { getProducts } from '../services/productService';
 
 const ProductsMenu: React.FC = () => {
-  const { applianceProducts, musicalProducts, videoGameProducts, loading, error } = useProductsMenu();
+  const { applianceProducts, musicalProducts, videoGameProducts,clothesProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showChat, setShowChat] = useState(false);
@@ -97,6 +97,11 @@ const ProductsMenu: React.FC = () => {
                     category="Videogames" 
                     products={videoGameProducts} 
                   />
+                  <ProductsDisplay 
+                    title="Latest in Videogames" 
+                    category="Videogames" 
+                    products={clothesProducts} 
+                  />
                 </>
               )}
             </div>
@@ -108,7 +113,7 @@ const ProductsMenu: React.FC = () => {
               if (botAnswer.text === "No products found.") {
                 
               } else {
-                if (botAnswer.products) {
+                if (botAnswer.products ) {
                   setProducts(botAnswer.products);
                 }
               }

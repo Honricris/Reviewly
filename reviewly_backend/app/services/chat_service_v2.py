@@ -2,7 +2,7 @@ import os
 import requests
 import json
 from dotenv import load_dotenv
-from app.services.product_service import searchProduct, get_product_by_id
+from app.services.product_service import searchProduct, get_product_by_id, get_all_categories
 from app.services.review_service import get_reviews_by_embedding
 from app import create_app
 
@@ -24,6 +24,19 @@ class ChatService:
         ]
         self.product_id = None 
         
+
+        app = create_app()
+        with app.app_context():
+            categories = get_all_categories()
+
+    
+        if categories:
+            categories_str = ", ".join(categories)
+            self.messages.append({
+                "role": "system",
+                "content": f"Available product categories: {categories_str}"
+            })
+
         self.tool_functions = {
             "search_product": self._handle_search_product,
             "get_reviews_by_embedding": self._handle_get_reviews_by_embedding
@@ -70,6 +83,18 @@ class ChatService:
                             "type": "object",
                             "properties": {
                                 "query": {"type": "string", "description": "Product name or description."},
+                                 "category": {
+                                    "type": "string",
+                                    "description": "Main category of the product, Optional."
+                                },
+                                "min_price": {
+                                    "type": "number",
+                                    "description": "Minimum price filter for the search results. Optional."
+                                },
+                                "max_price": {
+                                    "type": "number",
+                                    "description": "Maximum price filter for the search results. Optional."
+                                },
                                 "top_n": {"type": "integer", "description": "The number of products to return.","default": 5}
                             },
                             "required": ["query"]
@@ -172,7 +197,7 @@ class ChatService:
                             break
         except requests.exceptions.RequestException as e:
             print(f"Error durante la solicitud a OpenRouter AI: {e}")
-            yield f"Error durante solicitud a OpenRouter AI: {e}"
+            yield json.dumps({"error": "The service is currently unavailable. Please try again later."})
         except Exception as e:
             print(f"Ocurrió un error inesperado: {e}")
             yield f"Ocurrió un error inesperado: {e}"
@@ -259,7 +284,7 @@ class ChatService:
             if not product or "top_products" not in product or not product["top_products"]:
                 return json.dumps({"error": "No se encontró el producto."})
             
-            product_id = product["top_products"][0]["id"]
+            product_id = product["top_products"][0]["product_id"]
             reviews = get_reviews_by_embedding(query_text, product_id, top_k=1)
         else:
             return json.dumps({"error": "Faltan argumentos: se requiere product_id o product_name_or_description."})

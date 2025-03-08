@@ -18,6 +18,8 @@ const useProductsMenu = () => {
   const [applianceProducts, setApplianceProducts] = useState<any[]>([]);
   const [musicalProducts, setMusicalProducts] = useState<any[]>([]);
   const [videoGameProducts, setVideoGameProducts] = useState<any[]>([]);  
+  const [clothesProducts, setClothesProducts] = useState<any[]>([]);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,10 +39,13 @@ const useProductsMenu = () => {
       const appliances = await fetchProductsByCategory('Appliances');
       const musical = await fetchProductsByCategory('Musical_Instruments');
       const videoGames = await fetchProductsByCategory('Videogames'); 
+      const clothes = await fetchProductsByCategory('Clothes'); 
+
 
       setApplianceProducts(appliances);
       setMusicalProducts(musical);
       setVideoGameProducts(videoGames); 
+      setClothesProducts(clothes);
     } finally {
       setLoading(false);
     }

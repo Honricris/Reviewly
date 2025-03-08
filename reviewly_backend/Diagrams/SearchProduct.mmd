@@ -1,0 +1,23 @@
+```mermaid
+graph TD;
+    A[Input: query] -->|Encode query| B[query embedding];
+    
+    B -->|Search in products| C[Title matches];
+    C -->|Filter by similarity| C1[Calculate title and description using SIMILARITY];
+    C1 -->|Compute title score| C2[title score = 70% title + 30% description];
+    C2 -->|Select top 30| C3[Filtered products];
+    
+    C3 -->|Search in product details| D[Detail scores from embeddings];
+    D -->|Compute detail score| D1[Calculate detail score];
+    
+    C3 -->|Search in product features| E[Feature scores from embeddings];
+    E -->|Compute feature score| E1[Calculate feature score];
+    
+    D1 -->|Join with feature score| F1[Merge scores];
+    E1 -->|Join with detail score| F1;
+    
+    F1 -->|Final Score Calculation| F[total score = 70% title score + 20% detail score + 10% feature score];
+    
+    F -->|Sort by total score| G[Order by descending];
+    G -->|Select top N| H[Final results];
+```

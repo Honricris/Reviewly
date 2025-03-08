@@ -46,7 +46,6 @@ def create_review_for_product(data: dict) -> tuple:
     Returns:
         tuple: Respuesta en formato JSON y el código de estado HTTP.
     """
-    print("Procesando reseña:", data)  # Imprimir los datos de la reseña
 
     # Buscar el producto usando el parent_asin
     parent_asin = data.get('parent_asin') or data.get('asin')
@@ -208,7 +207,6 @@ def get_reviews_by_embedding(query_text, product_id, top_k=3):
         ).params(query_embedding=query_embedding_array, product_id=product_id, top_k=top_k).all()
 
 
-        # print(f"ESTO ES LO QUE DEVUELVO: {result}")
         return result
 
     except Exception as e:

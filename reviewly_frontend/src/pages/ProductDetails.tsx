@@ -218,7 +218,7 @@ const ProductDetails: React.FC = () => {
                       }`}
                     >
                       <h3>{review.title}</h3>
-                      <p>{review.text}</p>
+                      <div className="review-text" dangerouslySetInnerHTML={{ __html: review.text }} />
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <Rating
                           name={`review-rating-${index}`}

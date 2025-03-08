@@ -286,7 +286,7 @@ product-details h2 {
 }
 
 
-.review-card p {
+.review-card div {
   margin: 10px 0;
   max-height: 200px;
   overflow-y: auto; 
