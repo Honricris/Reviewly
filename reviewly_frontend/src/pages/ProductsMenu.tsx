@@ -98,8 +98,8 @@ const ProductsMenu: React.FC = () => {
                     products={videoGameProducts} 
                   />
                   <ProductsDisplay 
-                    title="Latest in Videogames" 
-                    category="Videogames" 
+                    title="Latest in Clothes" 
+                    category="Clothes" 
                     products={clothesProducts} 
                   />
                 </>

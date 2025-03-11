@@ -174,3 +174,24 @@
     background-color: #dae0e5;
     border-color: #6c757d;
 }
+
+
+/* Status message*/
+.status-message {
+  font-style: italic;
+  color: #888;
+  background: transparent;
+  display: inline-block;
+  position: relative;
+  animation: breathe 2s infinite ease-in-out; 
+}
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1); 
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05); 
+    opacity: 0.9;
+  }
+}

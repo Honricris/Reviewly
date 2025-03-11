@@ -58,7 +58,7 @@ const useProductsMenu = () => {
   return {
     applianceProducts,
     videoGameProducts,  
-
+    clothesProducts,
     musicalProducts,
     loading,
     error,

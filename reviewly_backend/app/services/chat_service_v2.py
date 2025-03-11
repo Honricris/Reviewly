@@ -9,6 +9,15 @@ from app import create_app
 load_dotenv()
 
 class ChatService:
+    #TODO Meter contexto de los productos tambien dentro de ProductMenu
+    #TODO Meter mensajes de espera.
+    #Cambiar endpoint barra.
+    #Mejorar frontend
+    #meter usuario
+    #separar llm service y llamadas a funciones.
+    #Elegir modelos gemini 4o mini qwen deepseek  
+    #Hacer que se carguen los productos antes que la respuesta
+
     def __init__(self):
         
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
@@ -19,7 +28,7 @@ class ChatService:
         self.messages = [
             {
                 "role": "system",
-                "content": "You are an assistant for an online store. You can answer questions about product information, provide recommendations, and help customers with their purchases. You can not make directly purchases."
+                "content": "You are an  assistantfor an online store. You can answer questions about product information, provide recommendations, and help customers with their purchases. You can not make directly purchases."
             }
         ]
         self.product_id = None 
@@ -176,6 +185,19 @@ class ChatService:
                                                 tool_calls_buffer[tool_call["index"]]["arguments"] += tool_call["function"].get("arguments", "")
                                         
                                     if tool_call_detected and data_obj["choices"][0].get("finish_reason") == "tool_calls":
+
+                                        function_name = list(tool_calls_buffer.values())[0]['name']
+
+                                        if function_name == "search_product":
+                                            yield json.dumps({"type": "status", "message": "Searching for products"})
+
+                                        elif function_name == "get_reviews_by_embedding":
+                                            yield json.dumps({"type": "status", "message": "Searching information in the reviews"})
+
+                                        else:
+                                            yield json.dumps({"type": "status", "message": f"Executing function {function_name}"})
+
+
                                         responses = self._handle_tool_calls(list(tool_calls_buffer.values()))
                                         for response in responses:
                                             self.messages.append({"role": "tool", "name": response["name"], "tool_call_id": response["id"], "content": response["content"]})
@@ -285,7 +307,9 @@ class ChatService:
                 return json.dumps({"error": "No se encontró el producto."})
             
             product_id = product["top_products"][0]["product_id"]
-            reviews = get_reviews_by_embedding(query_text, product_id, top_k=1)
+            app = create_app()
+            with app.app_context():
+                reviews = get_reviews_by_embedding(query_text, product_id, top_k=1)
         else:
             return json.dumps({"error": "Faltan argumentos: se requiere product_id o product_name_or_description."})
         

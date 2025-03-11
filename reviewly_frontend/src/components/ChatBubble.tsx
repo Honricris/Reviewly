@@ -6,9 +6,14 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ChatIcon from '@mui/icons-material/Chat';
 import ReactMarkdown from 'react-markdown';
 
-const BotMessage = ({ text }) => {
+interface BotMessageProps {
+  text: string;
+  className?: string; 
+}
+
+const BotMessage = ({ text, className }: BotMessageProps) => {
   return (
-    <div className="bot-message">
+    <div className={`bot-message ${className || ''}`}>
       <ReactMarkdown>{text}</ReactMarkdown>
     </div>
   );
@@ -25,7 +30,7 @@ interface ChatBubbleProps {
 }
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, scrollToHighlightedReview }) => {
-  const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[] }[]>([]);
+  const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[]; isStatus?: boolean}[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,7 +68,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
         text: '', 
         time: new Date().toLocaleTimeString(),
         reviewIds: [] as number[],
-        products: [] as any[]
+        products: [] as any[],
+        isStatus: false
       };
   
       setMessages((prev) => [...prev, botMessage]);
@@ -80,10 +86,23 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
             if (parsedChunk.type === 'additional_data') {
               botMessage.reviewIds = parsedChunk.data.review_ids || [];
               botMessage.products = parsedChunk.data.products || [];
+            }else if (parsedChunk.type === 'status') {
+
+              const statusMessage = {
+                sender: 'bot' as const,
+                text: parsedChunk.message,
+                time: new Date().toLocaleTimeString(),
+                isStatus: true
+              };
+              setMessages((prev) => [...prev.slice(0, -1), statusMessage]);
+              setIsLoading(false); 
+
             } else {
+              setMessages((prev) => prev.filter(msg => !msg.isStatus));
               botMessage.text += chunk;
+              setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
+
             }
-            setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
           } catch (error) {
             botMessage.text += chunk;
             setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
@@ -113,6 +132,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
       sendMessage();
     }
   };
+  
 
   return (
     <div className={`chat-container ${isOpen ? 'open' : ''}`}>
@@ -125,12 +145,16 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
           </div>
           <div className="chat-messages">
           {messages.map((message, index) => (
-            <div key={index} className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-              <div className="message-header">
-                <span className="message-sender">{message.sender === 'user' ? '👤 User' : '🤖 Chat Bot'}</span>
-                <span className="message-time">{message.time}</span>
-              </div>
-              {message.sender === 'bot' ? <BotMessage text={message.text} /> : <div className="message-text">{message.text}</div>}
+              <div key={index} className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
+                <div className="message-header">
+                  <span className="message-sender">{message.sender === 'user' ? '👤 User' : '🤖 Chat Bot'}</span>
+                  <span className="message-time">{message.time}</span>
+                </div>
+                {message.sender === 'bot' ? (
+                  <BotMessage text={message.text} className={message.isStatus ? 'status-message' : ''} />
+                ) : (
+                  <div className="message-text">{message.text}</div>
+                )}
               
               {message.sender === 'bot' && message.reviewIds && message.reviewIds.length > 0 && (
                 <div className="highlighted-reviews-buttons">
