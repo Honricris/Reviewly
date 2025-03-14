@@ -1,197 +1,397 @@
+/* Estilos generales del contenedor del chat */
 .chat-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 450px;
-    max-height: 840px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    z-index: 1000;
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* Animación para abrir */
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 450px; /* Ajustado para coincidir con el ancho de la tarjeta */
+  max-height: 500px; /* Ajustado para coincidir con la altura de la tarjeta */
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
 
-  }
+.chat-container:not(.open) {
+  border: none;
+  transform: translateY(20px);
+}
+
+/* Estilos del encabezado del chat */
+.chat-header {
+  display: flex;
   
-  .chat-container:not(.open) {
-    border: none;
-    transform: translateY(20px); /* Desplaza el chat hacia abajo cuando está cerrado */
-    /* Elimina el borde cuando el chat está cerrado */
-  }
-  
-  .chat-header {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px;
-  }
-  
-  .close-chat {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #007bff;
-  }
-  
-  .close-chat:hover {
-    color: #0056b3;
-  }
-  
-  .chat-messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-    max-height: 60vh;
-  }
-  
-  .chat-message {
-    padding: 8px;
-    margin: 5px;
-    border-radius: 5px;
-    word-wrap: break-word;
-    max-width: 90%;
-  }
-  
-  .user-message {
-    background-color: #d1f7d1;
-    align-self: flex-end;
-  }
-  
-  .bot-message {
-    background-color: #f1f1f1;
-    align-self: flex-start;
-  }
-  
-  .chat-input-container {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border-top: 1px solid #ddd;
-  }
-  
-  .chat-input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  .chat-input:disabled {
-    background-color: #f0f0f0;
-  }
-  
-  button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  button:disabled {
-    background-color: #ccc;
-  }
-  
-  button:hover:not(:disabled) {
-    background-color: #0056b3;
-  }
-  
-  .chat-bubble {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background-color: #007bff;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    z-index: 1001;
-    transition: transform 0.2s, background-color 0.2s;
-  }
-  
-  .chat-bubble:hover {
-    background-color: #0056b3;
-    transform: scale(1.1);
-  }
-  
-  .chat-icon {
-    font-size: 24px;
-    color: #fff;
-  }
-  
-  .message-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85em;
-    color: #555;
-    margin-bottom: 5px;
-  }
-  
-  .message-sender {
-    font-weight: bold;
-  }
-  
-  .message-time {
-    font-style: italic;
-  }
-  
-  .message-text {
-    word-wrap: break-word;
-  }
-  
-  .highlighted-reviews-buttons {
-    display: flex;
-    justify-content: center; 
-    gap: 10px; 
-    margin-top: 10px;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #ccc;
+}
+
+
+.chat-header .text-chat {
+  color: black;
+  margin: 0;
+  font-size: 20px;
+}
+
+/* Estilos del cuerpo del chat */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+/* Estilos de los mensajes */
+.chat-message {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  font-size: 13px;
+  word-wrap: break-word;
+  max-width: 90%;
+}
+
+.user-message {
+  background-color: #333;
+  color: #fff;
+  align-self: flex-end;
+}
+
+.bot-message {
+  background-color: #f1f1f1;
+  color: black;
+  align-self: flex-start;
+}
+
+/* Estilos del área de entrada de mensajes */
+.chat-input-container {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  resize: none;
+}
+
+.chat-input:disabled {
+  background-color: #f0f0f0;
+}
+
+button {
+  background-color: #333;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 13px;
+}
+
+button:hover:not(:disabled) {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+/* Estilos del botón de la burbuja de chat */
+.chat-bubble {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 1001;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.chat-bubble:hover {
+  transform: scale(1.1);
+}
+
+.chat-icon {
+  font-size: 24px;
+  color: #fff;
+}
+
+/* Estilos adicionales para los mensajes */
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85em;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.message-sender {
+  font-weight: bold;
+  color: #1E90FF;
+}
+
+.message-time {
+  font-style: italic;
+}
+
+.message-text {
+  word-wrap: break-word;
+}
+
+/* Estilos para los botones de reseñas destacadas */
+.highlighted-reviews-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .highlighted-reviews-buttons button {
-    background-color: #f8f9fa;
-    color: #212529; 
-    border: 1px solid #ced4da; 
-    padding: 6px 12px;
-    border-radius: 4px; 
-    font-size: 0.9em; 
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s; 
+  background-color: #f8f9fa;
+  color: #212529;
+  border: 1px solid #ced4da;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .highlighted-reviews-buttons button:hover {
-    background-color: #e2e6ea; 
-    border-color: #adb5bd; 
+  background-color: #e2e6ea;
+  border-color: #adb5bd;
 }
 
 .highlighted-reviews-buttons button:active {
-    background-color: #dae0e5;
-    border-color: #6c757d;
+  background-color: #dae0e5;
+  border-color: #6c757d;
 }
-
-
-/* Status message*/
+/* Status message */
 .status-message {
   font-style: italic;
   color: #888;
   background: transparent;
   display: inline-block;
   position: relative;
-  animation: breathe 2s infinite ease-in-out; 
+  animation: breathe 2s infinite ease-in-out;
 }
+
 @keyframes breathe {
   0%, 100% {
-    transform: scale(1); 
+    transform: scale(1);
     opacity: 1;
   }
   50% {
-    transform: scale(1.05); 
+    transform: scale(1.05);
     opacity: 0.9;
   }
+}
+
+/* Estilos para el botón de cierre (cuando el chat está abierto) */
+.close-button {
+  margin-left: auto; 
+}
+
+.close-button .checkbox-wrapper * {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.close-button .checkbox-wrapper input[type="checkbox"] {
+  display: none;
+}
+
+.close-button .checkbox-wrapper label {
+  --size: 30px; /* Tamaño más pequeño para el botón de cierre */
+  position: relative;
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  margin: 0 auto;
+  background-color: #e1236a; /* Color rojo para el botón de cierre */
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.2s ease transform, 0.2s ease background-color,
+    0.2s ease box-shadow;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.close-button .checkbox-wrapper label:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  width: calc(var(--size) * 0.7);
+  height: calc(var(--size) * 0.7);
+  margin: 0 auto;
+  background-color: #e1236a;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  box-shadow: inset 0 var(--shadow) #ffbeb8;
+  transition: 0.2s ease width, 0.2s ease height;
+}
+
+.close-button .checkbox-wrapper label:hover:before {
+  width: calc(var(--size) * 0.55);
+  height: calc(var(--size) * 0.55);
+  box-shadow: inset 0 var(--shadow) #ff9d96;
+}
+
+.close-button .checkbox-wrapper label:active {
+  transform: scale(0.9);
+}
+
+.close-button .checkbox-wrapper .tick_mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--size) * 0.6);
+  height: calc(var(--size) * 0.6);
+  transform: translate(-50%, -50%);
+}
+
+.close-button .checkbox-wrapper .cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--size) * 0.6);
+  height: calc(var(--size) * 0.6);
+  transform: translate(-50%, -50%);
+  opacity: 1; /* La "X" siempre visible en el botón de cierre */
+  transition: opacity 0.2s ease;
+}
+
+.close-button .checkbox-wrapper .cross:before,
+.close-button .checkbox-wrapper .cross:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--size) * 0.4);
+  height: calc(var(--size) * 0.1);
+  background-color: #fff;
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.close-button .checkbox-wrapper .cross:before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.close-button .checkbox-wrapper .cross:after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Estilos para el botón de burbuja (cuando el chat está cerrado) */
+.chat-bubble .checkbox-wrapper * {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.chat-bubble .checkbox-wrapper input[type="checkbox"] {
+  display: none;
+}
+
+.chat-bubble .checkbox-wrapper label {
+  
+  --size: 65px;
+  --shadow: calc(var(--size) * 0.07) calc(var(--size) * 0.1);
+  position: relative;
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  margin: 0 auto;
+  background-color: #4158d0;
+  background-image: linear-gradient(
+    43deg,
+    #4158d0 0%,
+    #c850c0 46%,
+    #ffcc70 100%
+  );
+  border-radius: 50%;
+  box-shadow: 0 var(--shadow) #ffbeb8;
+  cursor: pointer;
+  transition: 0.2s ease transform, 0.2s ease background-color,
+    0.2s ease box-shadow;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.chat-bubble .checkbox-wrapper label:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  width: calc(var(--size) * 0.7);
+  height: calc(var(--size) * 0.7);
+  margin: 0 auto;
+  background-color: #fff;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  box-shadow: inset 0 var(--shadow) #ffbeb8;
+  transition: 0.2s ease width, 0.2s ease height;
+}
+
+.chat-bubble .checkbox-wrapper label:hover:before {
+  width: calc(var(--size) * 0.55);
+  height: calc(var(--size) * 0.55);
+  box-shadow: inset 0 var(--shadow) #ff9d96;
+}
+
+.chat-bubble .checkbox-wrapper label:active {
+  transform: scale(0.9);
+}
+
+.chat-bubble .checkbox-wrapper .tick_mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--size) * 0.6);
+  height: calc(var(--size) * 0.6);
+  transform: translate(-50%, -50%);
+}
+
+.chat-bubble .checkbox-wrapper .cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--size) * 0.6);
+  height: calc(var(--size) * 0.6);
+  transform: translate(-50%, -50%);
+  opacity: 0; /* La "X" oculta en el botón de burbuja */
+  transition: opacity 0.2s ease;
+}
+
+.chat-bubble .checkbox-wrapper .cross:before,
+.chat-bubble .checkbox-wrapper .cross:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--size) * 0.4);
+  height: calc(var(--size) * 0.1);
+  background-color: #fff;
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.chat-bubble .checkbox-wrapper .cross:before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.chat-bubble .checkbox-wrapper .cross:after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }

@@ -139,9 +139,25 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
       {isOpen && (
         <>
           <div className="chat-header">
-            <button className="close-button" onClick={onClick}>
-              <ArrowForwardIcon style={{ fontSize: 24 }} />
-            </button>
+            <div className="header-left">
+              {/*<div className="img-avatar"></div> */}
+              <div className="text-chat">Chatbot Assistant</div> 
+          </div>
+            <div className="close-button" onClick={onClick}>
+              <div className="checkbox-wrapper">
+                <input
+                  name="ehs_approval"
+                  className="form-check-label custom-radio-label"
+                  id="Rejected"
+                  type="checkbox"
+                />
+                <label htmlFor="Rejected">
+                  <div className="">
+                    <div className="cross"></div>
+                  </div>
+                </label>
+              </div>
+            </div>
           </div>
           <div className="chat-messages">
           {messages.map((message, index) => (
@@ -200,7 +216,19 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
       )}
       {!isOpen && (
         <div className="chat-bubble" onClick={onClick}>
-          <ChatIcon style={{ fontSize: 40 }} />
+          <div className="checkbox-wrapper">
+            <input
+              name="ehs_approval"
+              className="form-check-label custom-radio-label"
+              id="Rejected"
+              type="checkbox"
+            />
+            <label htmlFor="Rejected">
+              <div className="tick_mark">
+                <div className="cross"></div>
+              </div>
+            </label>
+          </div>
         </div>
       )}
     </div>

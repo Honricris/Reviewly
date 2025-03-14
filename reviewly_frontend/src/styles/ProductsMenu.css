@@ -14,7 +14,6 @@
   top: 0;
   left: 0;
   right: 0;
-  background-color: white;
   padding: 1rem 2rem;
   z-index: 10; 
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -134,36 +133,6 @@
   padding: 1rem;
   z-index: 10;
   overflow-y: auto;
-}
-
-.chat-window p {
-  margin: 0;
-  padding: 0.5rem 0;
-  font-size: 14px;
-}
-
-/* Ajuste del espacio para el botón de chat */
-.chat-bubble {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: #007bff;
-  color: #fff;
-  border-radius: 50%;
-  width: 60px;
-  height: 800px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-  transition: transform 0.3s ease;
-}
-
-.chat-bubble:hover {
-  transform: scale(1.1);
 }
 
 

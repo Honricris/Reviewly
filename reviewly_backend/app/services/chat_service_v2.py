@@ -10,7 +10,6 @@ load_dotenv()
 
 class ChatService:
     #TODO Meter contexto de los productos tambien dentro de ProductMenu
-    #TODO Meter mensajes de espera.
     #Cambiar endpoint barra.
     #Mejorar frontend
     #meter usuario

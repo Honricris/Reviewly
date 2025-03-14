@@ -16,6 +16,7 @@ const ProductDetails: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [highlightedReviewIds, setHighlightedReviewIds] = useState<number[]>([]);
+  const [currentThumbnailIndex, setCurrentThumbnailIndex] = useState(0);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -75,6 +76,32 @@ const ProductDetails: React.FC = () => {
     setIsDragging(false);
   };
 
+
+
+  //Metodos para los botones de las flechas de las imágenes
+  const handleNextThumbnail = () => {
+    setCurrentThumbnailIndex((prevIndex) => {
+      const nextIndex = (prevIndex + 1) % product.images.length; 
+      const nextImage = product.images[nextIndex].large; 
+      setSelectedImage(nextImage); 
+      return nextIndex; 
+    });
+  };
+  
+  
+  const handlePrevThumbnail = () => {
+    setCurrentThumbnailIndex((prevIndex) => {
+      const prevIndexUpdated = (prevIndex - 1 + product.images.length) % product.images.length; 
+      const prevImage = product.images[prevIndexUpdated].large; 
+      setSelectedImage(prevImage); 
+      return prevIndexUpdated; 
+    });
+  };
+  
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+  };
+
   const handlePageChange = async (direction: 'previous' | 'next') => {
     if (direction === 'previous' && currentPage > 1) {
       setCurrentPage((prevPage) => prevPage - 1);
@@ -84,11 +111,6 @@ const ProductDetails: React.FC = () => {
   };
 
   const SearchHandler = () => {};
-
-
-  const handleImageClick = (image: string) => {
-    setSelectedImage(image);
-  };
 
   const handleChatResponse = (botAnswer: { answer: string; reviews: number[] }) => {
     
@@ -143,112 +165,132 @@ const ProductDetails: React.FC = () => {
 
   return (
     <div className="product-details-container">
-      <Header onSearch={SearchHandler}/>
-      <h1>{product.title}</h1>
-      <div className={`content-layout ${isChatOpen ? 'chat-open' : ''}`}>
-        <div className="product-layout">
+      <Header onSearch={SearchHandler} />
+  
+      {/* Contenedor principal para left y right container */}
+      <div className="main-content">
+        <div className="left-container">
           <div className="product-images">
-            <div className="main-image">
-              <img src={selectedImage} alt={product.title} />
+            <div className="main-image-container">
+              <img src={selectedImage} alt={product.title} className="main-image" />
             </div>
-            <div className="thumbnail-images">
-              {product.images.map((image: any, index: number) => (
-                <img
-                  key={index}
-                  src={image.large}
-                  alt={`Thumbnail ${index}`}
-                  onClick={() => handleImageClick(image.large)}
-                  className="thumbnail"
-                />
-              ))}
+            <div className="thumbnail-carousel">
+              <button className="arrow-button left-arrow" onClick={handlePrevThumbnail}>&larr;</button>
+              <div className="thumbnail-images">
+                {product.images.map((image: any, index: number) => (
+                  <img
+                    key={index}
+                    src={image.large}
+                    alt={`Thumbnail ${index}`}
+                    onClick={() => handleImageClick(image.large)}
+                    className={`thumbnail ${selectedImage === image.large ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
+              <button className="arrow-button right-arrow" onClick={handleNextThumbnail}>&rarr;</button>
             </div>
-          </div>
-          <div className="product-details">
-            {product.price !== 0 && <p><strong>Price:</strong> ${product.price}</p>}
-            {product.description.length > 0 && <p><strong>Description:</strong> {product.description}</p>}
-            <p>
-              <strong>Average Rating:</strong>
-              <span className="rating-container">
-                <Rating value={product.average_rating} precision={0.1} readOnly size="small" />
-                <span className="rating-text">
-                  {product.average_rating} ({product.rating_number} reviews)
-                </span>
-              </span>
-            </p>
-            <h2>Features:</h2>
-            <ul>
-              {product.features.map((feature: string, index: number) => (
-                <li key={index}>{feature}</li>
-              ))}
-            </ul>
           </div>
         </div>
-
-        <div className="reviews-section">
-          <h2>Reviews</h2>
-          <hr className="section-divider" />
-          <div className="reviews-wrapper">
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => handlePageChange('previous')}
-              disabled={currentPage === 1}
-            >
-              Previous Page
-            </Button>
-            <div
-              className="reviews-container"
-              ref={reviewsContainerRef}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-            >
-              {reviewsLoading ? (
-                <div>Loading reviews...</div>
-              ) : reviews.length > 0 ? (
-                <div className="reviews-carousel">
-                  {reviews.map((review, index) => (
-                    <div
-                      id={`review-${review.review_id}`}
-                      key={index}
-                      className={`review-card ${
-                        highlightedReviewIds.includes(review.review_id) ? 'highlighted' : ''
-                      }`}
-                    >
-                      <h3>{review.title}</h3>
-                      <div className="review-text" dangerouslySetInnerHTML={{ __html: review.text }} />
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <Rating
-                          name={`review-rating-${index}`}
-                          value={review.rating}
-                          precision={0.1}
-                          readOnly
-                          size="small"
-                        />
-                      </div>
-                    </div>
-                  ))}
+  
+        <div className="right-container">
+          <div className={`content-layout ${isChatOpen ? 'chat-open' : ''}`}>
+            <div className="product-layout">
+              <h1 className="product-title">{product.title}</h1>
+              <div className="product-details">
+                {product.price !== 0 && (
+                  <p className="product-price">${product.price}</p>
+                )}
+                {product.description.length > 0 && (
+                  <p className="product-description">{product.description}</p>
+                )}
+                <div className="product-rating">
+                  <Rating value={product.average_rating} precision={0.1} readOnly size="small" />
+                  <span className="rating-text">
+                    {product.average_rating} ({product.rating_number} reviews)
+                  </span>
                 </div>
-              ) : (
-                <p>No reviews available for this product.</p>
-              )}
+                <div className="product-features">
+                  <h2>Features</h2>
+                  <ul>
+                    {product.features.map((feature, index) => (
+                      <li key={index}>{feature}</li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <a href={product.amazon_link} target="_blank" rel="noopener noreferrer" className="amazon-link">
+                <img src="https://www.niftybuttons.com/amazon/amazon-button2.png"/>
+                </a>
+              </div>
             </div>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => handlePageChange('next')}
-              disabled={currentPage === totalPages}
-            >
-              Next Page
-            </Button>
           </div>
-          <p>Page {currentPage} of {totalPages}</p>
         </div>
-        <a href={product.amazon_link} target="_blank" rel="noopener noreferrer">View on Amazon</a>
       </div>
-
+  
+      {/* Reviews section debajo del main-content */}
+      <div className="reviews-section">
+        <h2>Reviews</h2>
+        <hr className="section-divider" />
+        <div className="reviews-wrapper">
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handlePageChange('previous')}
+            disabled={currentPage === 1}
+          >
+            Previous Page
+          </Button>
+          <div
+            className="reviews-container"
+            ref={reviewsContainerRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+          >
+            {reviewsLoading ? (
+              <div>Loading reviews...</div>
+            ) : reviews.length > 0 ? (
+              <div className="reviews-carousel">
+                {reviews.map((review, index) => (
+                  <div
+                    id={`review-${review.review_id}`}
+                    key={index}
+                    className={`review-card ${
+                      highlightedReviewIds.includes(review.review_id) ? 'highlighted' : ''
+                    }`}
+                  >
+                    <h3>{review.title}</h3>
+                    <div className="review-text" dangerouslySetInnerHTML={{ __html: review.text }} />
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <Rating
+                        name={`review-rating-${index}`}
+                        value={review.rating}
+                        precision={0.1}
+                        readOnly
+                        size="small"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No reviews available for this product.</p>
+            )}
+          </div>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handlePageChange('next')}
+            disabled={currentPage === totalPages}
+          >
+            Next Page
+          </Button>
+        </div>
+        <p>Page {currentPage} of {totalPages}</p>
+      </div>
+  
       <ChatBubble 
         onClick={() => setIsChatOpen(!isChatOpen)} 
         isOpen={isChatOpen} 
