@@ -5,6 +5,8 @@ import '../styles/ProductDetails.css';
 import ChatBubble from '../components/ChatBubble';
 import { Rating, Button } from '@mui/material';
 import Header from '../components/Header';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -102,6 +104,9 @@ const ProductDetails: React.FC = () => {
     setSelectedImage(imageUrl);
   };
 
+
+
+
   const handlePageChange = async (direction: 'previous' | 'next') => {
     if (direction === 'previous' && currentPage > 1) {
       setCurrentPage((prevPage) => prevPage - 1);
@@ -167,7 +172,6 @@ const ProductDetails: React.FC = () => {
     <div className="product-details-container">
       <Header onSearch={SearchHandler} />
   
-      {/* Contenedor principal para left y right container */}
       <div className="main-content">
         <div className="left-container">
           <div className="product-images">
@@ -175,7 +179,9 @@ const ProductDetails: React.FC = () => {
               <img src={selectedImage} alt={product.title} className="main-image" />
             </div>
             <div className="thumbnail-carousel">
-              <button className="arrow-button left-arrow" onClick={handlePrevThumbnail}>&larr;</button>
+              <button className="arrow-button left-arrow" onClick={handlePrevThumbnail}>
+                <ArrowBackIcon /> 
+              </button>
               <div className="thumbnail-images">
                 {product.images.map((image: any, index: number) => (
                   <img
@@ -187,42 +193,54 @@ const ProductDetails: React.FC = () => {
                   />
                 ))}
               </div>
-              <button className="arrow-button right-arrow" onClick={handleNextThumbnail}>&rarr;</button>
+              <button className="arrow-button right-arrow" onClick={handleNextThumbnail}>
+                <ArrowForwardIcon /> 
+              </button>
             </div>
           </div>
         </div>
-  
         <div className="right-container">
           <div className={`content-layout ${isChatOpen ? 'chat-open' : ''}`}>
             <div className="product-layout">
               <h1 className="product-title">{product.title}</h1>
               <div className="product-details">
                 {product.price !== 0 && (
-                  <p className="product-price">${product.price}</p>
+                  <div className="price-rating-container">
+                    <p className="product-price">${product.price}</p>
+                    <span className="separator"> - </span>
+                    <div className="product-rating">
+                      <Rating value={product.average_rating} precision={0.1} readOnly size="small" />
+                      <span className="rating-text">
+                        {product.average_rating} ({product.rating_number} reviews)
+                      </span>
+                    </div>
+                  </div>
                 )}
                 {product.description.length > 0 && (
                   <p className="product-description">{product.description}</p>
-                )}
-                <div className="product-rating">
-                  <Rating value={product.average_rating} precision={0.1} readOnly size="small" />
-                  <span className="rating-text">
-                    {product.average_rating} ({product.rating_number} reviews)
-                  </span>
-                </div>
+                )}    
+
+                <hr className="divider"></hr>
                 <div className="product-features">
                   <h2>Features</h2>
-                  <ul>
+                  <ul className="features-list">
                     {product.features.map((feature, index) => (
-                      <li key={index}>{feature}</li>
+                      <li key={index} className="feature-item">
+                        {feature}
+                      </li>
                     ))}
                   </ul>
                 </div>
-                
+                                
                 <a href={product.amazon_link} target="_blank" rel="noopener noreferrer" className="amazon-link">
                 <img src="https://www.niftybuttons.com/amazon/amazon-button2.png"/>
                 </a>
               </div>
             </div>
+          </div>
+          <div className="scroll-indicator">
+            <span className="scroll-text">Scroll down for reviews</span>
+            <div className="arrow-down"></div>
           </div>
         </div>
       </div>

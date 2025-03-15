@@ -9,20 +9,7 @@
   max-width: 100%;
 }
 
-.products-menu-header {
-  position: fixed; 
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 1rem 2rem;
-  z-index: 10; 
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: flex-end; 
-  width: 100%;
-  box-sizing: border-box;
-  height: 80px; 
-}
+
 
 .products-title {
 
