@@ -171,7 +171,6 @@ const ProductDetails: React.FC = () => {
   return (
     <div className="product-details-container">
       <Header onSearch={SearchHandler} />
-  
       <div className="main-content">
         <div className="left-container">
           <div className="product-images">

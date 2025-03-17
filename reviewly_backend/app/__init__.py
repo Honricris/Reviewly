@@ -51,10 +51,11 @@ def create_app():
             print(f"Error conectando a la base de datos: {e}")
 
     # Registrar namespaces de Flask-RESTx
-    from app.routes import product_routes, review_routes, chat_routes, health_routes
+    from app.routes import product_routes, review_routes, chat_routes, health_routes, auth_routes
     api.add_namespace(product_routes.api, path=f"{API_PREFIX}/products")
     api.add_namespace(review_routes.api, path=f"{API_PREFIX}/reviews")
     api.add_namespace(chat_routes.api, path=f"{API_PREFIX}/chat")
     api.add_namespace(health_routes.api, path="/health")
+    api.add_namespace(auth_routes.api, path=f"{API_PREFIX}/auth") 
 
     return app

@@ -16,13 +16,10 @@ const Header: React.FC<{ onSearch: (query: string) => void }> = ({ onSearch }) =
       const currentScrollY = window.scrollY;
 
       if (currentScrollY === 0) {
-        // Si está en la parte superior, asegúrate de que el header esté visible
         setIsHeaderVisible(true);
       } else if (currentScrollY > lastScrollY) {
-        // Scroll hacia abajo
         setIsHeaderVisible(false);
       } else {
-        // Scroll hacia arriba
         setIsHeaderVisible(true);
       }
 
@@ -37,16 +34,24 @@ const Header: React.FC<{ onSearch: (query: string) => void }> = ({ onSearch }) =
   }, []);
 
   return (
-    <header
-      className="products-menu-header"
-      style={{
-        transform: isHeaderVisible ? 'translateY(0)' : 'translateY(-100%)',
-        transition: 'transform 0.3s ease-in-out',
-      }}
-    >
-      <Link to="/products" className="home-button">
-        <img src={reviewlyButtonImage} alt="Go to Products" className="home-button-image" />
+  <header
+    className="products-menu-header"
+    style={{
+      transform: isHeaderVisible ? 'translateY(0)' : 'translateY(-100%)',
+      transition: 'transform 0.3s ease-in-out',
+    }}
+  >
+    <Link to="/products" className="home-button">
+      <img src={reviewlyButtonImage} alt="Go to Products" className="home-button-image" />
+    </Link>
+
+    <div className="home-link-container">
+      <Link to="/products" className="home-link">
+        Home
       </Link>
+    </div>
+
+    <div className="search-bar-container">
       <SearchBar
         onSearch={(query) => {
           setSearchQuery(query);
@@ -56,8 +61,9 @@ const Header: React.FC<{ onSearch: (query: string) => void }> = ({ onSearch }) =
         onBarClick={() => setIsExpanded(!isExpanded)}
         searchBarRef={searchBarRef}
       />
-    </header>
-  );
+    </div>
+  </header>
+);
 };
 
 export default Header;

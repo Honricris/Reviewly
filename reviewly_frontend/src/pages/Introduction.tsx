@@ -29,7 +29,7 @@ const IntroPage: React.FC = () => {
           <p className="banner-description">
             Discover insights, analyze reviews, and make informed decisions with our advanced chatbot and sentiment analysis tools.
           </p>
-          <button className="try-button" onClick={() => navigate("/products")}>Try for Free</button>
+          <button className="try-button" onClick={() => navigate("/login")}>Try for Free</button>
         </div>
       </section>
 

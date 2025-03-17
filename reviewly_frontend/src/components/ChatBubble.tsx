@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { ThreeDots } from 'react-loader-spinner'; 
 import '../styles/ChatBubble.css';
 import chatService from '../services/chatService';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward'; 
-import ChatIcon from '@mui/icons-material/Chat';
 import ReactMarkdown from 'react-markdown';
 
 interface BotMessageProps {
@@ -86,6 +84,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
             if (parsedChunk.type === 'additional_data') {
               botMessage.reviewIds = parsedChunk.data.review_ids || [];
               botMessage.products = parsedChunk.data.products || [];
+
+
+              if (botMessage.products.length > 0 && onResponse) {
+                onResponse({ products: botMessage.products });
+              } else if (botMessage.reviewIds.length > 0 && onResponse) {
+                onResponse({ reviews: botMessage.reviewIds });
+              }
+
             }else if (parsedChunk.type === 'status') {
 
               const statusMessage = {
@@ -110,11 +116,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
         }
       }
   
-      if (botMessage.products.length > 0 && onResponse) {
-        onResponse({ products: botMessage.products });
-      } else if (botMessage.reviewIds.length > 0 && onResponse) {
-        onResponse({ reviews: botMessage.reviewIds });
-      }
+      
   
     } catch (error) {
       console.error("Error in sendMessage:", error);
@@ -140,7 +142,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
         <>
           <div className="chat-header">
             <div className="header-left">
-              {/*<div className="img-avatar"></div> */}
               <div className="text-chat">Chatbot Assistant</div> 
           </div>
             <div className="close-button" onClick={onClick}>

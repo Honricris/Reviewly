@@ -1,18 +1,14 @@
-
 .products-menu-header {
-  z-index: 1000; 
-
-  position: fixed; 
+  z-index: 1000;
+  position: fixed;
   display: flex;
-
+  justify-content: space-between; 
+  align-items: center;
   padding: 1rem 2rem;
   width: 100%;
-  margin-bottom: 1px;
-  box-sizing: border-box;
-  height: 80px; 
+  height: 60px;
   background-color: transparent;
-  align-items: center;
-
+  box-sizing: border-box;
 }
 
 .home-button {
@@ -21,7 +17,37 @@
 }
 
 .home-button-image {
-  height: 40px;
+  height: 60px;
+  width: auto;
+}
+
+
+.home-link-container {
+  flex: 1; 
+  display: flex;
+  justify-content: center; 
+}
+
+.home-link {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 18px;
+  font-weight: 500; 
+  color: #333; 
+  text-decoration: none; 
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: color 0.3s ease-in-out, transform 0.2s ease-in-out; 
+  letter-spacing: 0.5px; 
+}
+
+.home-link:hover {
+  color: #2d79f3; 
+  transform: scale(1.05); 
+}
+
+.search-bar-container {
+  display: flex;
+  align-items: center;
 }
 
 .search-bar {
@@ -30,16 +56,4 @@
   height: 40px;
   border-radius: 20px;
   padding: 0 10px;
-}
-
-.home-button {
-  display: inline-block;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 5px;
-}
-
-.home-button-image {
-  width: 125px;
-  height: auto;
 }
