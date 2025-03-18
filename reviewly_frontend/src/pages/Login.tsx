@@ -2,12 +2,14 @@ import '../styles/Login.css';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/authService';
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +23,7 @@ const Login = () => {
       const response = await AuthService.login({ email, password });
       console.log('Login successful:', response);
 
-      localStorage.setItem('token', response.access_token);
+      login(response.access_token);
 
       navigate('/products');
     } catch (err) {

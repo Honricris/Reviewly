@@ -10,8 +10,12 @@ load_dotenv()
 
 class ChatService:
     #Cambiar endpoint barra.
-    #Mejorar frontend
+    #Mejorar frontend productos y chat y producto especifico
     #meter usuario
+
+    #Arreglar remember me. 
+    #acceder a review sin autorizacion
+    #arreglar go to reviews
     #Elegir modelos gemini 4o mini qwen deepseek  
 
     def __init__(self):

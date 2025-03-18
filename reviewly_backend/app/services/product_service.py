@@ -153,15 +153,24 @@ def searchProduct(query: str, top_n=5, category: str = None, min_price: float = 
             FROM product_features pf
             WHERE pf.product_id IN (SELECT product_id FROM title_matches)
             GROUP BY pf.product_id
+        ),
+        product_features AS (
+            SELECT pf.product_id, 
+                   JSON_AGG(pf.feature) AS features  -- Agrupa las características en un JSON
+            FROM product_features pf
+            WHERE pf.product_id IN (SELECT product_id FROM title_matches)
+            GROUP BY pf.product_id
         )
         SELECT tm.product_id, tm.title, tm.description, tm.main_category, tm.price,
                tm.title_score, 
                COALESCE(ds.detail_score, 0) AS detail_score,
                COALESCE(fs.feature_score, 0) AS feature_score,
-               (tm.title_score * 0.7 + COALESCE(ds.detail_score, 0) * 0.2 + COALESCE(fs.feature_score, 0) * 0.1) AS total_score
+               (tm.title_score * 0.7 + COALESCE(ds.detail_score, 0) * 0.2 + COALESCE(fs.feature_score, 0) * 0.1) AS total_score,
+               pf.features  -- Incluir las características
         FROM title_matches tm
         LEFT JOIN detail_scores ds ON tm.product_id = ds.product_id
         LEFT JOIN feature_scores fs ON tm.product_id = fs.product_id
+        LEFT JOIN product_features pf ON tm.product_id = pf.product_id
         ORDER BY total_score DESC
         LIMIT :top_n
         """),
@@ -181,15 +190,20 @@ def searchProduct(query: str, top_n=5, category: str = None, min_price: float = 
     for product in products:
         large_images = [img.get("large") for img in product.images if isinstance(img, dict) and "large" in img] if product.images else []
         
+        # Obtener las características del producto desde la consulta combinada
+        features = next((row.features for row in combined_query if row.product_id == product.product_id), [])
+        
         result.append({
             "product_id": product.product_id,
             "title": product.title,
+            "description": product.description,  
             "main_category": product.main_category,
             "average_rating": product.average_rating,
             "rating_number": product.rating_number,
             "price": product.price,
             "store": product.store,
             "images": large_images,
+            "features": features,  
             "scores": {
                 "title_score": next((row.title_score for row in combined_query if row.product_id == product.product_id), 0),
                 "detail_score": next((row.detail_score for row in combined_query if row.product_id == product.product_id), 0),

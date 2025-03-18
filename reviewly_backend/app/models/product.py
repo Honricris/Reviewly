@@ -31,13 +31,10 @@ class Product(db.Model):
 
     features_list = relationship("ProductFeature", back_populates="product", cascade="all, delete-orphan")
 
-    #Relacion con reviews 
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
 
-    # EAlmacenamos los details a parte
     details_list = relationship("ProductDetail", back_populates="product", cascade="all, delete-orphan")
 
-    # Constraints
     __table_args__ = (
         db.CheckConstraint('average_rating >= 0 AND average_rating <= 5', name='check_average_rating'),
         db.CheckConstraint('rating_number >= 0', name='check_rating_number'),
@@ -46,7 +43,6 @@ class Product(db.Model):
 
 
     def generate_amazon_link(self):
-        # Si 'asin' está disponible, se usa ese valor; de lo contrario, usa 'parent_asin'.
         asin_to_use = self.asin if self.asin else self.parent_asin
         if asin_to_use:
             self.amazon_link = f"https://www.amazon.com/dp/{asin_to_use}"

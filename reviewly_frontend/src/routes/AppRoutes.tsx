@@ -7,6 +7,7 @@ import Register from '../pages/Register';
 import Login from '../pages/Login'; 
 import NotFound from '../pages/NotFound';
 import React from 'react';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
   return (
@@ -14,8 +15,14 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<Splash />} />
         <Route path="/introduction" element={<Introduction />} />
-        <Route path="/products" element={<ProductsMenu />} />
-        <Route path="/products/:id" element={<ProductDetails />} />
+        
+
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/products/:id" element={<ProductDetails />} />
+          <Route path="/products" element={<ProductsMenu />} />
+        </Route>
+       
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />}  />
         <Route path="*" element={<NotFound />} />

@@ -1,4 +1,6 @@
 from flask_restx import Namespace, Resource, fields
+from flask_jwt_extended import jwt_required
+
 from app.services.product_service import (
     get_all_products, get_product_by_id, create_product, update_product, delete_product, get_all_categories,searchProduct
 )
@@ -37,6 +39,7 @@ class ProductList(Resource):
     @api.param('price_max', 'Maximum price filter for products', type=float)
     @api.param('limit', 'Number of products to return', type=int, default=10)
     @api.param('page', 'Page number for pagination', type=int, default=1)
+    @jwt_required()
     def get(self):
         name = request.args.get('name')
         category = request.args.get('category')
@@ -50,14 +53,17 @@ class ProductList(Resource):
         return products, 200
 
     @api.expect(product_model)
+    @jwt_required()
     def post(self):
         data = api.payload
         product = create_product(data)
         return product, 201
+    
 
 @api.route('/<int:id>')
 class Product(Resource):
     @api.marshal_with(product_model)
+    @jwt_required()
     def get(self, id):
         product = get_product_by_id(id)
         if not product:
@@ -65,6 +71,7 @@ class Product(Resource):
         return product, 200
 
     @api.expect(product_model)
+    @jwt_required()
     def put(self, id):
         data = api.payload
         product = update_product(id, data)
@@ -72,6 +79,7 @@ class Product(Resource):
             return {"error": "Product not found"}, 404
         return product, 200
 
+    @jwt_required() 
     def delete(self, id):
         success = delete_product(id)
         if not success:

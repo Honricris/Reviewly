@@ -5,6 +5,7 @@ import { AuthService } from '../services/authService';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import PasswordHelper from '../components/PasswordHelper'; 
+import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validateEmail = (email: string) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -84,7 +86,7 @@ const Register = () => {
       const response = await AuthService.register({ email, password });
       console.log('Registration successful:', response);
 
-      localStorage.setItem('token', response.access_token);
+      login(response.access_token);
       navigate('/products');
     } catch (err) {
       setError('Error registering user. Please try again.');

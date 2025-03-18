@@ -198,12 +198,12 @@
 /* Contenedor principal */
 .register-container {
     display: flex;
-    justify-content: center; /* Centra horizontalmente */
-    align-items: center; /* Centra verticalmente */
-    gap: 30px; /* Espacio entre los widgets */
-    min-height: 100vh; /* Ocupa toda la altura de la página */
+    justify-content: center;
+    align-items: center;
+    gap: 30px; 
+    min-height: 100vh;
     padding: 20px;
-    background-color: #f5f5f5; /* Fondo de la página */
+    background-color: #f5f5f5; 
   }
   
   /* Formulario principal */
@@ -231,7 +231,7 @@
     border-radius: 10px;
     border: 1px solid #ecedec;
     padding: 20px;
-    width: 300px; /* Ancho fijo para el widget de ayuda */
+    width: 300px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
   

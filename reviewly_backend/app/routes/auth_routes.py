@@ -25,15 +25,16 @@ class Register(Resource):
         email = data.get('email')
         password = data.get('password')
 
-        user_id, error, status_code = AuthService.register_user(email, password)
+        user, error, status_code = AuthService.register_user(email, password)
         if error:
             return {"message": error}, status_code
 
-        access_token = generate_access_token(user_id)
+        access_token = generate_access_token(user)
 
         return {
             "message": "Usuario registrado exitosamente",
-            "user_id": user_id,
+            "user_id": user.id,
+            "email": user.email,
             "access_token": access_token
         }, 201
     
@@ -46,14 +47,15 @@ class Login(Resource):
         email = data.get('email')
         password = data.get('password')
 
-        user_id, error, status_code = AuthService.login_user(email, password)
+        user, error, status_code = AuthService.login_user(email, password)
         if error:
             return {"message": error}, status_code
 
-        access_token = generate_access_token(user_id)
+        access_token = generate_access_token(user)
 
         return {
             "message": "Inicio de sesión exitoso",
-            "user_id": user_id,
+            "user_id": user.id,
+            "email": user.email,
             "access_token": access_token
         }, 200

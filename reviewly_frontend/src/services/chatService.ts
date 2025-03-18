@@ -25,10 +25,14 @@ const chatService = {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const apiUrl = `${baseUrl}${endpoint}`;
 
+      // Obtener el token del localStorage
+      const token = localStorage.getItem('token');
+
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }), // Agregar el token si existe
         },
         body: JSON.stringify(requestData),
       });

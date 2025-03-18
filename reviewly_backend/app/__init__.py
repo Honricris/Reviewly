@@ -6,8 +6,11 @@ from app.config import Config
 from sqlalchemy import text
 from dotenv import load_dotenv
 import os
+from flask_jwt_extended import JWTManager
+from flask import jsonify
+from flask_jwt_extended.exceptions import NoAuthorizationError
 
-# Inicializar SQLAlchemy
+
 db = SQLAlchemy()
 
 def check_required_env_vars():
@@ -18,21 +21,38 @@ def check_required_env_vars():
     if missing_vars:
         raise EnvironmentError(f"Faltan las siguientes variables de entorno: {', '.join(missing_vars)}")
 
-# Verificar que las variables de entorno requeridas estén definidas
 check_required_env_vars()
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+     # Configuración de CORS
+    CORS(
+        app,
+        origins="http://localhost:5173",  
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  
+        allow_headers=["Content-Type", "Authorization"],  
+        supports_credentials=True  
+    )
 
-    # Prefijo de la API
     API_PREFIX = '/api/v0'
 
-    # Configuración de la aplicación
     app.config.from_object(Config)
+
+    app.config['JWT_SECRET_KEY'] = os.getenv('SECRET_KEY') 
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 3600 
+    jwt = JWTManager(app)
+
+
+    
     db.init_app(app)
 
-    # Crear instancia de Flask-RESTx
+    from app.models.user import User
+    from app.models.product import Product
+    from app.models.productdetail import ProductDetail
+    from app.models.productfeature import ProductFeature
+    from app.models.review import Review
+    from app.models.amazonuser import AmazonUser
+
     api = Api(
         app,
         version="1.0",
@@ -41,7 +61,6 @@ def create_app():
         doc="/"  
     )
 
-    # Verificar la conexión a la base de datos
     with app.app_context():
         try:
             db.create_all()
@@ -50,7 +69,21 @@ def create_app():
         except Exception as e:
             print(f"Error conectando a la base de datos: {e}")
 
-    # Registrar namespaces de Flask-RESTx
+
+    @jwt.unauthorized_loader
+    def unauthorized_callback(callback):
+        return jsonify({"message": "Missing Authorization Header"}), 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_callback(callback):
+        print(f"Invalid token callback: {callback}")
+        return jsonify({"message": "Invalid token"}), 422
+    
+    @app.errorhandler(NoAuthorizationError)
+    def handle_no_authorization_error(e):
+        return jsonify({"message": "Missing Authorization Header"}), 401
+
+
     from app.routes import product_routes, review_routes, chat_routes, health_routes, auth_routes
     api.add_namespace(product_routes.api, path=f"{API_PREFIX}/products")
     api.add_namespace(review_routes.api, path=f"{API_PREFIX}/reviews")

@@ -2,11 +2,12 @@ import jwt
 from datetime import datetime, timedelta
 from flask import current_app
 
-def generate_access_token(user_id):
-    expiration = datetime.utcnow() + timedelta(hours=1)
+def generate_access_token(user):
+    expiration = datetime.utcnow() + timedelta(hours=2)
     
     payload = {
-        "user_id": user_id,
+        "sub": user.email, 
+        "user_id": user.id,
         "exp": expiration
     }
     

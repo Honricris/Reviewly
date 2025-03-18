@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource, fields
+from flask_jwt_extended import jwt_required
 
 from app.services.review_service import (
     create_review_for_product, delete_review, update_review
@@ -48,6 +49,7 @@ review_model = api.model('Review', {
 @api.route('/')
 class Reviews(Resource):
     @api.expect(review_model, validate=True)
+    @jwt_required()
     def post(self):
         """
         Crear una reseña basada en el parent_asin.
@@ -60,6 +62,7 @@ class Reviews(Resource):
 # Ruta para eliminar una reseña
 @api.route('/<int:review_id>')
 class Review(Resource):
+    @jwt_required()
     def delete(self, review_id):
         """
         Eliminar una reseña
@@ -70,6 +73,7 @@ class Review(Resource):
         return {"message": "Reseña eliminada correctamente"}, 200
 
     @api.expect(review_model, validate=True)
+    @jwt_required()
     def put(self, review_id):
         """
         Actualizar una reseña

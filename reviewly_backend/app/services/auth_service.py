@@ -14,7 +14,7 @@ class AuthService:
         db.session.add(new_user)
         db.session.commit()
 
-        return new_user.id, None, 201  
+        return new_user, None, 201  
     
     
     @staticmethod
@@ -27,4 +27,4 @@ class AuthService:
         if not check_password_hash(user.password_hash, password):
             return None, "Invalid password", 401  
 
-        return user.id, None, 200
+        return user, None, 200

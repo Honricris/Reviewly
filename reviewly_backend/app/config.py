@@ -6,3 +6,6 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     SECRET_KEY = os.getenv("SECRET_KEY")
+
+    PROPAGATE_EXCEPTIONS= True
+

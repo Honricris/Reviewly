@@ -21,14 +21,15 @@
   width: auto;
 }
 
-
 .home-link-container {
   flex: 1; 
   display: flex;
   justify-content: center; 
+  align-items: center;
+  gap: 16px; 
 }
 
-.home-link {
+.nav-button {
   font-family: 'Helvetica Neue', sans-serif;
   font-size: 18px;
   font-weight: 500; 
@@ -38,22 +39,13 @@
   border-radius: 4px;
   transition: color 0.3s ease-in-out, transform 0.2s ease-in-out; 
   letter-spacing: 0.5px; 
+  background: none; 
+  border: none; 
+  cursor: pointer;
 }
 
-.home-link:hover {
+.nav-button:hover {
   color: #2d79f3; 
   transform: scale(1.05); 
-}
-
-.search-bar-container {
-  display: flex;
-  align-items: center;
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  height: 40px;
-  border-radius: 20px;
-  padding: 0 10px;
+  background: none; 
 }

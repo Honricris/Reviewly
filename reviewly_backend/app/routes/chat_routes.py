@@ -14,6 +14,7 @@ query_payload = api.model('QueryPayload', {
 @api.route('/query')
 class GeneralQuery(Resource):
     @api.expect(query_payload)
+    
     def post(self):
         data = api.payload
         question = data.get('prompt')
