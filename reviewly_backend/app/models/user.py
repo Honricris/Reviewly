@@ -7,7 +7,7 @@ class User(db.Model):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(255), unique=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(TIMESTAMP, default=func.now())
 
     def __repr__(self):

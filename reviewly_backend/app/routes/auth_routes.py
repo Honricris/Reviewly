@@ -59,3 +59,25 @@ class Login(Resource):
             "email": user.email,
             "access_token": access_token
         }, 200
+    
+@api.route('/google')
+class GoogleAuth(Resource):
+    @api.expect(api.model('GoogleAuth', {
+        'token': fields.String(required=True, description='Token de Google')
+    }))
+    def post(self):
+        data = request.get_json()
+        token = data.get('token')
+
+        user, error, status_code = AuthService.google_auth(token)
+        if error:
+            return {"message": error}, status_code
+
+        access_token = generate_access_token(user)
+
+        return {
+            "message": "Autenticación con Google exitosa",
+            "user_id": user.id,
+            "email": user.email,
+            "access_token": access_token
+        }, 200

@@ -10,6 +10,11 @@ interface RegisterData {
   password: string;
 }
 
+interface GoogleAuthData {
+  token: string;
+}
+
+
 export const AuthService = {
   login: async (data: LoginData) => {
     try {
@@ -21,11 +26,19 @@ export const AuthService = {
   },
 
   register: async (data: RegisterData) => {
-    try {
+    
       const response = await apiClient.post('/auth/register', data);
       return response.data;
+   
+  },
+
+
+  googleAuth: async (data: GoogleAuthData) => {
+    try {
+      const response = await apiClient.post('/auth/google', data);
+      return response.data;
     } catch (error) {
-      throw new Error('Error al registrar el usuario');
+      throw new Error('Error durante la autenticación con Google');
     }
   },
 };
