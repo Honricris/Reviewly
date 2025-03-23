@@ -164,13 +164,12 @@
     background-color: white;
     cursor: pointer;
     transition: border-color 0.3s ease-in-out, background-color 0.3s ease-in-out;
-}
-
-.btn:hover {
+  }
+  
+  .btn:hover {
     border: 1px solid #2d79f3;
     background-color: #f9f9f9;
-}
-
+  }
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

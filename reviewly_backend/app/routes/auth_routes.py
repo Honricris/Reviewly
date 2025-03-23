@@ -19,7 +19,7 @@ register_model = api.model('Register', {
 
 @api.route('/register')
 class Register(Resource):
-    @api.expect(register_model)  #
+    @api.expect(register_model)  
     def post(self):
         data = request.get_json()
         email = data.get('email')
@@ -77,6 +77,32 @@ class GoogleAuth(Resource):
 
         return {
             "message": "Autenticación con Google exitosa",
+            "user_id": user.id,
+            "email": user.email,
+            "access_token": access_token
+        }, 200
+    
+
+
+github_auth_model = api.model('GitHubAuth', {
+    'code': fields.String(required=True, description='Código de GitHub')
+})
+
+@api.route('/github')
+class GitHubAuth(Resource):
+    @api.expect(github_auth_model)
+    def post(self):
+        data = request.get_json()
+        code = data.get('code')
+
+        user, error, status_code = AuthService.github_auth(code)
+        if error:
+            return {"message": error}, status_code
+
+        access_token = generate_access_token(user)
+
+        return {
+            "message": "Autenticación con GitHub exitosa",
             "user_id": user.id,
             "email": user.email,
             "access_token": access_token

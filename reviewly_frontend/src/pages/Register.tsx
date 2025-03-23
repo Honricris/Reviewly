@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Login.css';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/authService';
@@ -7,6 +7,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import PasswordHelper from '../components/PasswordHelper'; 
 import { useAuth } from '../context/AuthContext';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GithubLoginButton, GoogleLoginButton } from 'react-social-login-buttons';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +18,15 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code) {
+      handleGitHubCallback(code);
+    }
+  }, []);
 
   const validateEmail = (email: string) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -107,7 +117,6 @@ const Register = () => {
     }
   };
 
-
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     try {
       const response = await AuthService.googleAuth({ token: credentialResponse.credential });
@@ -124,7 +133,23 @@ const Register = () => {
     setError('Google authentication failed. Please try again.');
   };
 
-  
+  const handleGitHubLogin = () => {
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${import.meta.env.VITE_GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent('http://localhost:5173/register')}&scope=user:email`;
+    window.location.href = githubAuthUrl;
+};
+
+  const handleGitHubCallback = async (code) => {
+    try {
+      const response = await AuthService.githubAuth({ code });
+      console.log('GitHub authentication successful:', response);
+
+      login(response.access_token);
+      navigate('/products');
+    } catch (err) {
+      setError('Error during GitHub authentication. Please try again.');
+    }
+  };
+
   return (
     <div className="register-container">
       <form className="form" onSubmit={handleRegister}>
@@ -208,21 +233,11 @@ const Register = () => {
         <p className="p line">Or With</p>
 
         <div className="flex-row">
-            <GoogleLogin
-              onSuccess={handleGoogleLoginSuccess}
-              onError={handleGoogleLoginError}
-            />
-          <button className="btn apple">
-            <svg viewBox="0 0 22.773 22.773" y="0px" x="0px" xmlnsXlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" id="Capa_1" width="20" height="20" version="1.1">
-              <g>
-                <g>
-                  <path d="M15.769,0c0.053,0,0.106,0,0.162,0c0.13,1.606-0.483,2.806-1.228,3.675c-0.731,0.863-1.732,1.7-3.351,1.573c-0.108-1.583,0.506-2.694,1.25-3.561C13.292,0.879,14.557,0.16,15.769,0z"></path>
-                  <path d="M20.67,16.716c0,0.016,0,0.03,0,0.045c-0.455,1.378-1.104,2.559-1.896,3.655c-0.723,0.995-1.609,2.334-3.191,2.334c-1.367,0-2.275-0.879-3.676-0.903c-1.482-0.024-2.297,0.735-3.652,0.926c-0.155,0-0.31,0-0.462,0c-0.995-0.144-1.798-0.932-2.383-1.642c-1.725-2.098-3.058-4.808-3.306-8.276c0-0.34,0-0.679,0-1.019c0.105-2.482,1.311-4.5,2.914-5.478c0.846-0.52,2.009-0.963,3.304-0.765c0.555,0.086,1.122,0.276,1.619,0.464c0.471,0.181,1.06,0.502,1.618,0.485c0.378-0.011,0.754-0.208,1.135-0.347c1.116-0.403,2.21-0.865,3.652-0.648c1.733,0.262,2.963,1.032,3.723,2.22c-1.466,0.933-2.625,2.339-2.427,4.74C17.818,14.688,19.086,15.964,20.67,16.716z"></path>
-                </g>
-              </g>
-            </svg>
-            Apple
-          </button>
+          <GoogleLogin
+            onSuccess={handleGoogleLoginSuccess}
+            onError={handleGoogleLoginError}
+          />
+          <GithubLoginButton onClick={handleGitHubLogin} />
         </div>
       </form>
         

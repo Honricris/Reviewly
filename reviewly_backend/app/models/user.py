@@ -6,7 +6,8 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String(255), unique=True, nullable=False)
+    github_id = db.Column(Integer, unique=True, nullable=True)
+    email = Column(String(255), unique=True, nullable=True)
     password_hash = Column(String(255), nullable=True)
     created_at = Column(TIMESTAMP, default=func.now())
 
