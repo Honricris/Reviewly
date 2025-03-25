@@ -3,11 +3,13 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 450px; /* Ajustado para coincidir con el ancho de la tarjeta */
-  max-height: 500px; /* Ajustado para coincidir con la altura de la tarjeta */
+  width: 392px; 
+  max-height: 650px;
+  
   background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 16px; 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 
+              0 5px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   z-index: 1000;
@@ -17,18 +19,48 @@
 .chat-container:not(.open) {
   border: none;
   transform: translateY(20px);
+  
 }
-
+.chat-container.open {
+  height: 714px; 
+}
 /* Estilos del encabezado del chat */
 .chat-header {
+  position: relative;
   display: flex;
-  
+  justify-content: center;
   align-items: center;
+  height: 100px; /* Adjust height as needed */
   padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1), 
+            0 4px 8px rgba(0,0,0,0.1);
   border-bottom: 1px solid #ccc;
 }
 
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
+.chatbot-icon {
+  width: 40px; 
+  height: 40px;
+  margin-bottom: 8px;
+}
+
+.chatbot-title {
+  color: black;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
 .chat-header .text-chat {
   color: black;
   margin: 0;
@@ -50,19 +82,53 @@
   font-size: 13px;
   word-wrap: break-word;
   max-width: 90%;
+  scroll-behavior: smooth;
+  border: 1px solid #dad8d8;
 }
 
 .user-message {
-  background-color: #333;
+  background-color: #2C3E50;
   color: #fff;
   align-self: flex-end;
+  box-shadow: 0 2px 4px rgba(36, 13, 13, 0.1);
+  border-radius: 12px 12px 0 12px;
 }
+
+.message-container {
+  display: flex;
+  align-items: flex-start;
+}
+
+.message-container.bot {
+  position: relative;
+}
+
+.message-container.user {
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.message-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  margin-top: 5px;
+}
+
 
 .bot-message {
   background-color: #f1f1f1;
   color: black;
   align-self: flex-start;
+  font-size: 15px;
+  border-radius: 12px 12px 12px 0;
+  
 }
+.bot-message-content p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 
 /* Estilos del área de entrada de mensajes */
 .chat-input-container {
@@ -146,6 +212,7 @@ button:hover:not(:disabled) {
 
 .message-text {
   word-wrap: break-word;
+  font-size: 15px;
 }
 
 /* Estilos para los botones de reseñas destacadas */

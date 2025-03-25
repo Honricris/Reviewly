@@ -19,7 +19,7 @@ class ChatService:
     #Elegir modelos gemini 4o mini qwen deepseek 
 
     #Modificar algoritmo search, para repetir query y modificar busqueda inicial
-
+    # Incluir imagenes de producto?
     def __init__(self):
         
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"

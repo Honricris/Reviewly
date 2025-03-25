@@ -237,7 +237,8 @@ const Register = () => {
             onSuccess={handleGoogleLoginSuccess}
             onError={handleGoogleLoginError}
           />
-          <GithubLoginButton onClick={handleGitHubLogin} />
+          <GithubLoginButton onClick={handleGitHubLogin} 
+          style={{ height: '40px' }}  />
         </div>
       </form>
         

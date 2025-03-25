@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ThreeDots } from 'react-loader-spinner'; 
 import '../styles/ChatBubble.css';
 import chatService from '../services/chatService';
 import ReactMarkdown from 'react-markdown';
+import chatbotIcon from '../assets/chatbot.png'; 
 
 interface BotMessageProps {
   text: string;
@@ -11,12 +12,11 @@ interface BotMessageProps {
 
 const BotMessage = ({ text, className }: BotMessageProps) => {
   return (
-    <div className={`bot-message ${className || ''}`}>
+    <div className={`bot-message-content ${className || ''}`}>
       <ReactMarkdown>{text}</ReactMarkdown>
     </div>
   );
 };
-
 
 interface ChatBubbleProps {
   onClick: () => void;
@@ -24,14 +24,14 @@ interface ChatBubbleProps {
   productId?: string;
   onResponse?: (botAnswer: any) => void; 
   scrollToHighlightedReview?: (reviewId: number) => void;
-
 }
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, scrollToHighlightedReview }) => {
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[]; isStatus?: boolean}[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     const initialMessage = {
       sender: 'bot' as const,
@@ -41,10 +41,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
     setMessages([initialMessage]);
   }, []);
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-
-  
   const sendMessage = async () => {
     if (!currentMessage.trim()) return;
   
@@ -85,7 +89,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
               botMessage.reviewIds = parsedChunk.data.review_ids || [];
               botMessage.products = parsedChunk.data.products || [];
 
-
               if (botMessage.products.length > 0 && onResponse) {
                 onResponse({ products: botMessage.products });
               } else if (botMessage.reviewIds.length > 0 && onResponse) {
@@ -116,8 +119,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
         }
       }
   
-      
-  
     } catch (error) {
       console.error("Error in sendMessage:", error);
       setMessages((prev) => [
@@ -141,9 +142,10 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
       {isOpen && (
         <>
           <div className="chat-header">
-            <div className="header-left">
-              <div className="text-chat">Chatbot Assistant</div> 
-          </div>
+            <div className="header-center">
+              <img src={chatbotIcon} alt="Chatbot" className="chatbot-icon" />
+              <div className="chatbot-title">ChatBot</div>
+            </div>
             <div className="close-button" onClick={onClick}>
               <div className="checkbox-wrapper">
                 <input
@@ -161,43 +163,48 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
             </div>
           </div>
           <div className="chat-messages">
-          {messages.map((message, index) => (
-              <div key={index} className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-                <div className="message-header">
-                  <span className="message-sender">{message.sender === 'user' ? '👤 User' : '🤖 Chat Bot'}</span>
-                  <span className="message-time">{message.time}</span>
-                </div>
-                {message.sender === 'bot' ? (
-                  <BotMessage text={message.text} className={message.isStatus ? 'status-message' : ''} />
-                ) : (
-                  <div className="message-text">{message.text}</div>
+            {messages.map((message, index) => (
+              <div key={index} className={`message-container ${message.sender}`}>
+                {message.sender === 'bot' && (
+                  <img src={chatbotIcon} alt="Chatbot" className="message-icon" />
                 )}
-              
-              {message.sender === 'bot' && message.reviewIds && message.reviewIds.length > 0 && (
-                <div className="highlighted-reviews-buttons">
-                  {message.reviewIds.map((reviewId, buttonIndex) => (
-                    <button key={buttonIndex} onClick={() => scrollToHighlightedReview?.(reviewId)}>
-                      Go to Review {buttonIndex + 1}
-                    </button>
-                  ))}
+                <div className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
+                  {message.sender === 'bot' ? (
+                    <BotMessage text={message.text} className={message.isStatus ? 'status-message' : ''} />
+                  ) : (
+                    <div className="message-text">{message.text}</div>
+                  )}
+                
+                  {message.sender === 'bot' && message.reviewIds && message.reviewIds.length > 0 && (
+                    <div className="highlighted-reviews-buttons">
+                      {message.reviewIds.map((reviewId, buttonIndex) => (
+                        <button key={buttonIndex} onClick={() => scrollToHighlightedReview?.(reviewId)}>
+                          Go to Review {buttonIndex + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            ))}
             {isLoading && (
-              <div className="chat-message bot-message">
-                <div className="message-text">
-                  <ThreeDots
-                    visible={true}
-                    height="30"
-                    width="30"
-                    color="#4fa94d"
-                    radius="9"
-                    ariaLabel="three-dots-loading"
-                  />
+              <div className="message-container bot">
+                <img src={chatbotIcon} alt="Chatbot" className="message-icon" />
+                <div className="chat-message bot-message">
+                  <div className="message-text">
+                    <ThreeDots
+                      visible={true}
+                      height="30"
+                      width="30"
+                      color="#4fa94d"
+                      radius="9"
+                      ariaLabel="three-dots-loading"
+                    />
+                  </div>
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
           <div className="chat-input-container">
             <input
