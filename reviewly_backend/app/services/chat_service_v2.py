@@ -12,6 +12,7 @@ class ChatService:
     #Cambiar endpoint barra.
     #Mejorar frontend productos y chat y producto especifico
 
+
     #One tap google ? 
     #Arreglar remember me. 
 

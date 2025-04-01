@@ -1,28 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ProductsDisplay from '../components/ProductsDisplay';
 import useProductsMenu from '../hooks/useProductsMenu';
 import Header from '../components/Header';
-import FiltersMenu from '../components/FiltersMenu'; 
 import '../styles/ProductsMenu.css';
 import ChatBubble from '../components/ChatBubble';
-import { getProducts } from '../services/productService';
+import { getProducts, searchProducts } from '../services/productService';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import { animated, useSpring } from '@react-spring/web';
 
 const ProductsMenu: React.FC = () => {
-  const { applianceProducts, musicalProducts, videoGameProducts,clothesProducts, loading, error } = useProductsMenu();
+  const { applianceProducts, musicalProducts, videoGameProducts, clothesProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showChat, setShowChat] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedStore, setSelectedStore] = useState<string>("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1]);
-  const [categoryExpanded, setCategoryExpanded] = useState(false);
-  const [storeExpanded, setStoreExpanded] = useState(false);
-  const [priceExpanded, setPriceExpanded] = useState(false);
+  const [priceRange, setPriceRange] = useState<string>("all");
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [searchActive, setSearchActive] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const toggleChat = () => {
     setShowChat((prev) => !prev);
   };
 
+  const toggleFilter = (filterName: string) => {
+    setOpenFilter(openFilter === filterName ? null : filterName);
+  };
+
+  const selectOption = (type: string, value: string) => {
+    if (type === 'category') setSelectedCategory(value);
+    if (type === 'store') setSelectedStore(value);
+    if (type === 'price') setPriceRange(value);
+    setOpenFilter(null);
+  };
 
   const setGridMinHeight = () => {
     const grid = document.querySelector('.products-grid') as HTMLElement;
@@ -31,24 +43,100 @@ const ProductsMenu: React.FC = () => {
     const currentHeight = grid.offsetHeight;
     grid.style.minHeight = `${currentHeight}px`;
   };
-
   
-  useEffect(() => {
-    const delaySearch = setTimeout(async () => {
-      console.log(searchQuery)
-      if (searchQuery.trim() === "") {
-        setProducts([]); 
-        return;
+  
+
+  const handleSearchFocus = () => {
+    setSearchActive(true);
+    setTimeout(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
       }
+    }, 0);
+  };
 
-      setGridMinHeight();
+  const handleSearchBlur = () => {};
 
-      const fetchedProducts = await getProducts(1, 70, undefined, searchQuery);
-      setProducts(fetchedProducts.products);
-    }, 300);
+  const handleSearchSubmit = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      try {
+        setGridMinHeight();
+        const searchResults = await searchProducts(searchQuery.trim());
+        setProducts(searchResults.top_products || []);
+      } catch (error) {
+        console.error('Error in search:', error);
+        setProducts([]);
+      }
+    }
+  };
 
-    return () => clearTimeout(delaySearch);
-  }, [searchQuery]);
+  const handleCancelSearch = () => {
+    setSearchQuery("");
+    setProducts([]);
+    setSearchActive(false);
+  };
+
+  const arrowAnimation = useSpring({
+    transform: openFilter ? 'rotate(180deg)' : 'rotate(0deg)',
+    config: { tension: 300, friction: 20 }
+  });
+
+  const optionsAnimation = useSpring({
+    opacity: openFilter ? 1 : 0,
+    height: openFilter ? 'auto' : 0,
+    marginTop: openFilter ? '0.5rem' : '0',
+    config: { tension: 300, friction: 20 }
+  });
+
+  const FilterButton = ({ 
+    type, 
+    label, 
+    value, 
+    options 
+  }: {
+    type: string;
+    label: string;
+    value: string;
+    options: { value: string; label: string }[];
+  }) => {
+    return (
+      <div className={`filter-button ${openFilter === type ? 'active' : ''}`}>
+        <div className="filter-content" onClick={() => toggleFilter(type)}>
+          <span className="filter-label">{label}</span>
+          <div className="filter-value-container">
+            <span className="filter-value">{value}</span>
+            <animated.div style={arrowAnimation}>
+              {openFilter === type ? (
+                <ArrowDropUpIcon className="dropdown-icon" />
+              ) : (
+                <ArrowDropDownIcon className="dropdown-icon" />
+              )}
+            </animated.div>
+          </div>
+        </div>
+  
+        {openFilter === type && (
+          <animated.div style={optionsAnimation} className="filter-options">
+            {options.map((option) => (
+              <div
+                key={option.value}
+                className={`option-item ${
+                  (type === 'category' && selectedCategory === option.value) ||
+                  (type === 'store' && selectedStore === option.value) ||
+                  (type === 'price' && priceRange === option.value)
+                    ? 'selected'
+                    : ''
+                }`}
+                onClick={() => selectOption(type, option.value)}
+              >
+                {option.label}
+              </div>
+            ))}
+          </animated.div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="products-menu-container">
@@ -56,64 +144,123 @@ const ProductsMenu: React.FC = () => {
       {error && <div>Error: {error}</div>}
       {!loading && !error && (
         <>
-          <Header onSearch={setSearchQuery} />
+          <Header 
+            onSearch={() => {}}
+            onSearchFocus={handleSearchFocus}
+            onSearchBlur={handleSearchBlur}
+          />
           <div className="products-content">
-            {!showChat && (
-              <FiltersMenu
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                selectedStore={selectedStore}
-                setSelectedStore={setSelectedStore}
-                priceRange={priceRange}
-                setPriceRange={setPriceRange}
-                categoryExpanded={categoryExpanded}
-                setCategoryExpanded={setCategoryExpanded}
-                storeExpanded={storeExpanded}
-                setStoreExpanded={setStoreExpanded}
-                priceExpanded={priceExpanded}
-                setPriceExpanded={setPriceExpanded}
-              />
-            )}
-
-            <div className={`products-display-wrapper ${showChat ? 'with-chat' : ''}`}>
-
-               {products.length > 0 ? (
-                <ProductsDisplay title="Search Results" products={products} />
-              ) : (
-                <>
-                  <ProductsDisplay 
-                    title="Latest in Appliances" 
-                    category="Appliances" 
-                    products={applianceProducts} 
-                  />
-                  <ProductsDisplay 
-                    title="Latest in Musical Instruments" 
-                    category="Musical_Instruments" 
-                    products={musicalProducts} 
-                  />
-
-                  <ProductsDisplay 
-                    title="Latest in Videogames" 
-                    category="Videogames" 
-                    products={videoGameProducts} 
-                  />
-                  <ProductsDisplay 
-                    title="Latest in Clothes" 
-                    category="Clothes" 
-                    products={clothesProducts} 
-                  />
-                </>
-              )}
+            <div className="inspiration-container">
+              <div className="inspiration-text">
+                <h2>Get inspired</h2>
+                <p>Find exactly what you need with our hand-picked selection of top-rated Amazon products across all categories. Save time and shop with confidence - we've done the research so you get only the best!</p>
+              </div>
+              
+              <div className="filters-selectors">
+                <FilterButton
+                  type="category"
+                  label="Category"
+                  value={selectedCategory || "All Categories"}
+                  options={[
+                    { value: "", label: "All Categories" },
+                    { value: "Appliances", label: "Appliances" },
+                    { value: "Musical_Instruments", label: "Musical Instruments" },
+                    { value: "Videogames", label: "Videogames" },
+                    { value: "Clothes", label: "Clothes" }
+                  ]}
+                />
+                
+                <FilterButton
+                  type="store"
+                  label="Store"
+                  value={selectedStore || "All Stores"}
+                  options={[
+                    { value: "", label: "All Stores" },
+                    { value: "Amazon US", label: "Amazon US" },
+                    { value: "Amazon UK", label: "Amazon UK" },
+                    { value: "Amazon DE", label: "Amazon DE" },
+                    { value: "Amazon ES", label: "Amazon ES" }
+                  ]}
+                />
+                
+                <FilterButton
+                  type="price"
+                  label="Price"
+                  value={
+                    priceRange === "all" ? "All Prices" : 
+                    priceRange === "0-25" ? "$0 - $25" :
+                    priceRange === "25-50" ? "$25 - $50" :
+                    priceRange === "50-100" ? "$50 - $100" :
+                    priceRange === "100-500" ? "$100 - $500" : "$500+"
+                  }
+                  options={[
+                    { value: "all", label: "All Prices" },
+                    { value: "0-25", label: "$0 - $25" },
+                    { value: "25-50", label: "$25 - $50" },
+                    { value: "50-100", label: "$50 - $100" },
+                    { value: "100-500", label: "$100 - $500" },
+                    { value: "500+", label: "$500+" }
+                  ]}
+                />
+              </div>
             </div>
+
+            {searchActive ? (
+              <div className="search-mode-container">
+                <div className="search-input-container">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="what are you looking for?"
+                    className="centered-placeholder-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchSubmit}
+                    autoFocus
+                  />
+                  <button 
+                    className="cancel-search-button"
+                    onClick={handleCancelSearch}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {products.length > 0 && (
+                  <ProductsDisplay title="Search Results" products={products} />
+                )}
+              </div>
+            ) : (
+              <div className={`products-display-wrapper ${showChat ? 'with-chat' : ''}`}>
+                <ProductsDisplay 
+                  title="Latest in Appliances" 
+                  category="Appliances" 
+                  products={applianceProducts} 
+                />
+                <ProductsDisplay 
+                  title="Latest in Musical Instruments" 
+                  category="Musical_Instruments" 
+                  products={musicalProducts} 
+                />
+                <ProductsDisplay 
+                  title="Latest in Videogames" 
+                  category="Videogames" 
+                  products={videoGameProducts} 
+                />
+                <ProductsDisplay 
+                  title="Latest in Clothes" 
+                  category="Clothes" 
+                  products={clothesProducts} 
+                />
+              </div>
+            )}
           </div>
           <ChatBubble
             onClick={toggleChat}
             isOpen={showChat}
             onResponse={(botAnswer) => {
               if (botAnswer.text === "No products found.") {
-                
               } else {
-                if (botAnswer.products ) {
+                if (botAnswer.products) {
                   setProducts(botAnswer.products);
                 }
               }

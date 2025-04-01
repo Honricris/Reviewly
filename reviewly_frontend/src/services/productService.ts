@@ -41,3 +41,20 @@ export const getProductReviews = async (productId: string, page: number = 1) => 
     throw error;
   }
 };
+
+/* Usa el servicio de busqueda de productos*/
+export const searchProducts = async (query: string, top_n?: number, category?: string, min_price?: number, max_price?: number) => {
+  try {
+    const response = await apiClient.post('/products/search', {
+      query,
+      ...(top_n && { top_n }),
+      ...(category && { category }),
+      ...(min_price && { min_price }),
+      ...(max_price && { max_price }),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching products:', error);
+    throw error;
+  }
+};

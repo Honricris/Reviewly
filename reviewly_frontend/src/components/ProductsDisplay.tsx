@@ -39,9 +39,8 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
     };
 
     if (!category && products.length > 0) {
-      // Si se pasan productos directamente, solo se muestran sin hacer llamada a la API
       setProductList(products);
-      setTotalPages(1); // Solo una página si no estamos haciendo búsqueda
+      setTotalPages(1);
     } else {
       fetchProducts(currentPage);
     }

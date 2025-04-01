@@ -6,7 +6,13 @@ import '../styles/Header.css';
 import reviewlyButtonImage from '../assets/Reviewly_button.png';
 import { useAuth } from '../context/AuthContext';
 
-const Header: React.FC<{ onSearch: (query: string) => void }> = ({ onSearch }) => {
+interface HeaderProps {
+  onSearch: (query: string) => void;
+  onSearchFocus?: () => void;
+  onSearchBlur?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onSearch, onSearchFocus, onSearchBlur }) => {
   const { searchQuery, setSearchQuery, isExpanded, setIsExpanded, searchBarRef } = useSearchBar();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const navigate = useNavigate();
@@ -73,9 +79,10 @@ const Header: React.FC<{ onSearch: (query: string) => void }> = ({ onSearch }) =
             setSearchQuery(query);
             onSearch(query);
           }}
-          isExpanded={isExpanded}
           onBarClick={() => setIsExpanded(!isExpanded)}
           searchBarRef={searchBarRef}
+          onFocus={onSearchFocus}
+          onBlur={onSearchBlur}
         />
       </div>
     </header>

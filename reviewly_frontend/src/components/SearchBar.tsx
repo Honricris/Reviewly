@@ -1,33 +1,40 @@
 import React, { FC } from 'react';
 import '../styles/SearchBar.css';
-import SearchIcon from '@mui/icons-material/Search';  
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
-  isExpanded: boolean;
-  onBarClick: () => void;
-  searchBarRef: React.RefObject<HTMLDivElement>;
+  isExpanded?: boolean;
+  onBarClick?: () => void;
+  searchBarRef?: React.RefObject<HTMLDivElement>;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-const SearchBar: FC<SearchBarProps> = ({ onSearch, isExpanded, onBarClick, searchBarRef }) => {
+const SearchBar: FC<SearchBarProps> = ({ 
+  onSearch, 
+  isExpanded, 
+  onBarClick, 
+  searchBarRef,
+  onFocus,
+  onBlur 
+}) => {
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onSearch(event.target.value);
   };
 
   return (
-    <div
-      ref={searchBarRef}
-      className={`search-bar-container ${isExpanded ? 'expanded' : ''}`}
+    <div 
+      className={`search-container ${isExpanded ? 'expanded' : ''}`} 
       onClick={onBarClick}
+      ref={searchBarRef}
     >
-      <span className="search-icon">
-        <SearchIcon style={{ fontSize: 24 }} />  
-      </span>
       <input
         type="text"
-        placeholder="Search for a product..."
+        placeholder="Search something...."
         onChange={handleInputChange}
-        className="search-bar-input"
+        className="search-input"
+        onFocus={onFocus}
+        onBlur={onBlur}
       />
     </div>
   );
