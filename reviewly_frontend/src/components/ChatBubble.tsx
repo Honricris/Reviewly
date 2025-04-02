@@ -4,6 +4,11 @@ import '../styles/ChatBubble.css';
 import chatService from '../services/chatService';
 import ReactMarkdown from 'react-markdown';
 import chatbotIcon from '../assets/chatbot.png'; 
+import MinimizeIcon from '@mui/icons-material/Minimize';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ChatMenuPage from '../components/ChatMenuPage';
+
+
 
 interface BotMessageProps {
   text: string;
@@ -30,6 +35,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[]; isStatus?: boolean}[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showMenuPage, setShowMenuPage] = useState(true);
+
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -141,85 +149,89 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
     <div className={`chat-container ${isOpen ? 'open' : ''}`}>
       {isOpen && (
         <>
-          <div className="chat-header">
-            <div className="header-center">
-              <img src={chatbotIcon} alt="Chatbot" className="chatbot-icon" />
-              <div className="chatbot-title">ChatBot</div>
-            </div>
-            <div className="close-button" onClick={onClick}>
-              <div className="checkbox-wrapper">
-                <input
-                  name="ehs_approval"
-                  className="form-check-label custom-radio-label"
-                  id="Rejected"
-                  type="checkbox"
-                />
-                <label htmlFor="Rejected">
-                  <div className="">
-                    <div className="cross"></div>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
-          <div className="chat-messages">
-            {messages.map((message, index) => (
-              <div key={index} className={`message-container ${message.sender}`}>
-                {message.sender === 'bot' && (
-                  <img src={chatbotIcon} alt="Chatbot" className="message-icon" />
-                )}
-                <div className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
-                  {message.sender === 'bot' ? (
-                    <BotMessage text={message.text} className={message.isStatus ? 'status-message' : ''} />
-                  ) : (
-                    <div className="message-text">{message.text}</div>
-                  )}
-                
-                  {message.sender === 'bot' && message.reviewIds && message.reviewIds.length > 0 && (
-                    <div className="highlighted-reviews-buttons">
-                      {message.reviewIds.map((reviewId, buttonIndex) => (
-                        <button key={buttonIndex} onClick={() => scrollToHighlightedReview?.(reviewId)}>
-                          Go to Review {buttonIndex + 1}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="message-container bot">
-                <img src={chatbotIcon} alt="Chatbot" className="message-icon" />
-                <div className="chat-message bot-message">
-                  <div className="message-text">
-                    <ThreeDots
-                      visible={true}
-                      height="30"
-                      width="30"
-                      color="#4fa94d"
-                      radius="9"
-                      ariaLabel="three-dots-loading"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-          <div className="chat-input-container">
-            <input
-              type="text"
-              className="chat-input"
-              placeholder="Write your message..."
-              value={currentMessage}
-              onChange={(e) => setCurrentMessage(e.target.value)}
-              onKeyDown={handleKeyPress}
-              disabled={isLoading}
+          {showMenuPage ? (
+            <ChatMenuPage 
+              onCloseClick={onClick }
+              onChatClick={() => setShowMenuPage(false)}
+            
             />
-            <button onClick={sendMessage} disabled={isLoading || !currentMessage.trim()}>
-              {isLoading ? '⏳' : 'Send'}
-            </button>
-          </div>
+          ) : (
+            <>
+              <div className="chat-header">
+                <div className="header-left">
+                  <ArrowBackIcon 
+                    style={{ color: 'black', fontSize: '24px', marginRight: '10px' }} 
+                    onClick={() => setShowMenuPage(true)}
+                  />      
+                </div>
+                <div className="header-center">
+                  <img src={chatbotIcon} alt="Chatbot" className="chatbot-icon" />
+                  <div className="chatbot-title">ChatBot</div>
+                </div>
+                <div className="close-button" onClick={onClick}>
+                  <MinimizeIcon style={{ color: 'black', fontSize: '35px' }} />
+                </div>
+              </div>
+              <div className="chat-messages">
+                {messages.map((message, index) => (
+                  <div key={index} className={`message-container ${message.sender}`}>
+                    {message.sender === 'bot' && (
+                      <img src={chatbotIcon} alt="Chatbot" className="message-icon" />
+                    )}
+                    <div className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}>
+                      {message.sender === 'bot' ? (
+                        <BotMessage text={message.text} className={message.isStatus ? 'status-message' : ''} />
+                      ) : (
+                        <div className="message-text">{message.text}</div>
+                      )}
+                    
+                      {message.sender === 'bot' && message.reviewIds && message.reviewIds.length > 0 && (
+                        <div className="highlighted-reviews-buttons">
+                          {message.reviewIds.map((reviewId, buttonIndex) => (
+                            <button key={buttonIndex} onClick={() => scrollToHighlightedReview?.(reviewId)}>
+                              Go to Review {buttonIndex + 1}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="message-container bot">
+                    <img src={chatbotIcon} alt="Chatbot" className="message-icon" />
+                    <div className="chat-message bot-message">
+                      <div className="message-text">
+                        <ThreeDots
+                          visible={true}
+                          height="30"
+                          width="30"
+                          color="#4fa94d"
+                          radius="9"
+                          ariaLabel="three-dots-loading"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+              <div className="chat-input-container">
+                <input
+                  type="text"
+                  className="chat-input"
+                  placeholder="Write your message..."
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  disabled={isLoading}
+                />
+                <button onClick={sendMessage} disabled={isLoading || !currentMessage.trim()}>
+                  {isLoading ? '⏳' : 'Send'}
+                </button>
+              </div>
+            </>
+          )}
         </>
       )}
       {!isOpen && (

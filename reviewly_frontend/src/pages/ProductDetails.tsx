@@ -206,7 +206,7 @@ const ProductDetails: React.FC = () => {
                 {product.price !== 0 && (
                   <div className="price-rating-container">
                     <p className="product-price">${product.price}</p>
-                    <span className="separator"> - </span>
+                    <span className="separator">  </span>
                     <div className="product-rating">
                       <Rating value={product.average_rating} precision={0.1} readOnly size="small" />
                       <span className="rating-text">
@@ -244,7 +244,6 @@ const ProductDetails: React.FC = () => {
         </div>
       </div>
   
-      {/* Reviews section debajo del main-content */}
       <div className="reviews-section">
         <h2>Reviews</h2>
         <hr className="section-divider" />
