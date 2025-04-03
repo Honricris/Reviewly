@@ -8,7 +8,8 @@ def generate_access_token(user):
     payload = {
         "sub": str(user.id), 
         "email": user.email if user.email else None,  
-        "github_id": user.github_id if user.github_id else None,  
+        "github_id": user.github_id if user.github_id else None, 
+        "role": user.role,  
         "exp": expiration
     }
 

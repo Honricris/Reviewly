@@ -22,11 +22,9 @@ def get_reviews_by_product(product_id, limit=10, offset=0):
         )
         print(f"Returning reviews: {reviews}, total_reviews: {total_reviews}")
         
-        # Convertir rating a float para evitar problemas con Decimal
         reviews_dict = []
         for review in reviews:
             review_dict = review.to_dict()
-            # Asegurarse de que el rating es un float
             review_dict['rating'] = float(review_dict['rating'])
             reviews_dict.append(review_dict)
 
@@ -47,7 +45,6 @@ def create_review_for_product(data: dict) -> tuple:
         tuple: Respuesta en formato JSON y el código de estado HTTP.
     """
 
-    # Buscar el producto usando el parent_asin
     parent_asin = data.get('parent_asin') or data.get('asin')
     print(f"parent_asin obtenido: {parent_asin}")
     

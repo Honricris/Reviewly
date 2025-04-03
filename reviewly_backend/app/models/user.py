@@ -10,6 +10,7 @@ class User(db.Model):
     email = Column(String(255), unique=True, nullable=True)
     password_hash = Column(String(255), nullable=True)
     created_at = Column(TIMESTAMP, default=func.now())
+    role = Column(String(50), nullable=False, default="user") 
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email})>"

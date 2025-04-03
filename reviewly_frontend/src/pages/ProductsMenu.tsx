@@ -262,6 +262,8 @@ const ProductsMenu: React.FC = () => {
               } else {
                 if (botAnswer.products) {
                   setProducts(botAnswer.products);
+                  setSearchActive(true);
+
                 }
               }
             }}

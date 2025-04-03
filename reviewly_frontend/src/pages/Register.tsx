@@ -97,8 +97,8 @@ const Register = () => {
       const response = await AuthService.register({ email, password });
       console.log('Registration successful:', response);
 
-      login(response.access_token);
-      navigate('/products');
+      const userData = login(response.access_token);
+      navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
     }  catch (err) {
       console.error('Error during registration:', err);
   
@@ -122,8 +122,8 @@ const Register = () => {
       const response = await AuthService.googleAuth({ token: credentialResponse.credential });
       console.log('Google authentication successful:', response);
 
-      login(response.access_token);
-      navigate('/products');
+      const userData = login(response.access_token);
+        navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
     } catch (err) {
       setError('Error during Google authentication. Please try again.');
     }
@@ -143,8 +143,8 @@ const Register = () => {
       const response = await AuthService.githubAuth({ code });
       console.log('GitHub authentication successful:', response);
 
-      login(response.access_token);
-      navigate('/products');
+      const userData = login(response.access_token);
+      navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
     } catch (err) {
       setError('Error during GitHub authentication. Please try again.');
     }

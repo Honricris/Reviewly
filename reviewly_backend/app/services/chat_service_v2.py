@@ -7,7 +7,6 @@ from app import create_app
 from app.services.customer_function_handlers import CustomerHandlers
 
 load_dotenv()
-
 class ChatService:
     #Cambiar endpoint barra.
     #Mejorar frontend productos y chat y producto especifico
@@ -21,8 +20,9 @@ class ChatService:
 
     #Modificar algoritmo search, para repetir query y modificar busqueda inicial
     # Incluir imagenes de producto?
-    def __init__(self):
-        
+    def __init__(self, session_id):
+        self.session_id = session_id
+
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         self.headers = {
             "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
@@ -31,7 +31,7 @@ class ChatService:
         self.messages = [
             {
                 "role": "system",
-                "content": "You are an  assistant for an online store. You can answer questions about product information, provide recommendations, and help customers with their purchases. You can not make directly purchases."
+                "content": "You are an  assistant for an online store. You can answer questions about product information, provide recommendations, and help customers with their purchases. You can not make directly purchases. Never show images in your responses."
             }
         ]
         self.product_id = None 
@@ -55,7 +55,7 @@ class ChatService:
         }
 
 
-    def ask_question(self, prompt=None, product_id=None):
+    def ask_question(self, prompt=None, product_id=None, model="openai/gpt-4o-mini"):
         if prompt:
             self.messages.append({"role": "user", "content": prompt})
         
@@ -76,7 +76,7 @@ class ChatService:
         print(f"Product_id:  {self.product_id}" )
 
         payload = {
-            "model": "openai/gpt-4o-mini",
+            "model": model,
             "messages": self.messages,
             "top_p": 1,
             "temperature": 0.2,
@@ -195,8 +195,15 @@ class ChatService:
                                             yield json.dumps({"type": "status", "message": "Searching for products"})
 
                                         elif function_name == "get_reviews_by_embedding":
+                                            if self.product_id:
+                                                try:
+                                                    args = json.loads(list(tool_calls_buffer.values())[0]['arguments'])
+                                                    args['product_id'] = self.product_id
+                                                    list(tool_calls_buffer.values())[0]['arguments'] = json.dumps(args)
+                                                except json.JSONDecodeError:
+                                                    print("Error al decodificar argumentos existentes")
+                                            
                                             yield json.dumps({"type": "status", "message": "Searching information in the reviews"})
-
                                         else:
                                             yield json.dumps({"type": "status", "message": f"Executing function {function_name}"})
 

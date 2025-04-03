@@ -37,16 +37,15 @@ class CustomerHandlers:
         product_id = args.get("product_id")
         product_name_or_description = args.get("product_name_or_description")
         
+        
         if product_id:
             app = create_app()
             with app.app_context():
                 reviews = get_reviews_by_embedding(query_text, product_id, top_k=3)
-        
         elif product_name_or_description:
             app = create_app()
             with app.app_context():
                 product = searchProduct(product_name_or_description, top_n=1)
-            
             if not product or "top_products" not in product or not product["top_products"]:
                 return json.dumps({"error": "No se encontró el producto."})
             
@@ -61,6 +60,8 @@ class CustomerHandlers:
         review_ids = [review.review_id for review in reviews] if reviews else []
 
         reviews_text = "\n".join([review.text for review in reviews]) if reviews else "No hay reviews disponibles."
+        
+
         
         return json.dumps({
             "response_text": reviews_text,

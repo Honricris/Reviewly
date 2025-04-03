@@ -36,9 +36,13 @@ const Login = () => {
       const response = await AuthService.login({ email, password });
       console.log('Login successful:', response);
 
-      login(response.access_token);
+      const user = login(response.access_token);
 
-      navigate('/products');
+      if (user?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/products');
+      }
     } catch (err) {
       if (err.response && err.response.status === 401) {
         setError('Invalid email or password.');
@@ -56,8 +60,8 @@ const Login = () => {
       const response = await AuthService.googleAuth({ token: credentialResponse.credential });
       console.log('Google authentication successful:', response);
 
-      login(response.access_token);
-      navigate('/products');
+      const userData = login(response.access_token);
+      navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
     } catch (err) {
       setError('Error during Google authentication. Please try again.');
     }
@@ -77,8 +81,8 @@ const Login = () => {
         const response = await AuthService.githubAuth({ code });
         console.log('GitHub authentication successful:', response);
   
-        login(response.access_token);
-        navigate('/products');
+        const userData = login(response.access_token);
+        navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
       } catch (err) {
         setError('Error during GitHub authentication. Please try again.');
       }

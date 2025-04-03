@@ -20,7 +20,11 @@ const chatService = {
     endpoint: string = '/chat/query'
   ): Promise<ReadableStreamDefaultReader> {
     try {
-      const requestData = productId ? { prompt, product_id: productId } : { prompt };
+      const selectedModel = localStorage.getItem('selectedModel') || "openai/gpt-4o-mini";
+      
+      const requestData = productId 
+        ? { prompt, product_id: productId, model: selectedModel } 
+        : { prompt, model: selectedModel };
 
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const apiUrl = `${baseUrl}${endpoint}`;
@@ -31,7 +35,7 @@ const chatService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }), // Agregar el token si existe
+          ...(token && { Authorization: `Bearer ${token}` }), 
         },
         body: JSON.stringify(requestData),
       });

@@ -9,20 +9,25 @@ interface ChatMenuPageProps {
 }
 
 const ChatMenuPage: React.FC<ChatMenuPageProps> = ({ onCloseClick, onChatClick}) => {
-  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedProvider, setSelectedProvider] = useState('OpenAI');
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
-  const availableModels = [
-    'General Assistant',
-    'Product Expert',
-    'Technical Support',
-    'Order Specialist'
-  ];
-
-  const handleModelSelect = (model: string) => {
-    setSelectedModel(model);
-    setIsModelDropdownOpen(false);
+  const providerModels = {
+    "OpenAI": "openai/gpt-4o-mini",
+    "Anthropic": "anthropic/claude-3-haiku:beta",
+    "Mistral": "Mistral/ministral-8b",
+    "Amazon": "amazon/nova-micro-v1"
   };
+
+  const availableProviders = Object.keys(providerModels);
+
+  const handleProviderSelect = (provider: string) => {
+    setSelectedProvider(provider);
+    setIsModelDropdownOpen(false);
+    localStorage.setItem('selectedProvider', provider);
+    localStorage.setItem('selectedModel', providerModels[provider as keyof typeof providerModels]);
+  };
+
 
   return (
     <div className="chat-menu-container">
@@ -47,25 +52,25 @@ const ChatMenuPage: React.FC<ChatMenuPageProps> = ({ onCloseClick, onChatClick})
         </button>
       </div>
 
-      <div className="model-selector-container">
-        <div className="model-selector-label">Select the model you want to chat with:</div>
+        <div className="model-selector-container">
+        <div className="model-selector-label">Select the provider you want to use in the chat:</div>
         <div 
           className={`model-dropdown ${isModelDropdownOpen ? 'open' : ''}`}
           onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
         >
           <div className="model-dropdown-header">
-            {selectedModel || 'Choose a model'}
+            {selectedProvider || 'Choose a provider'}
             <span className={`dropdown-arrow ${isModelDropdownOpen ? 'up' : 'down'}`}></span>
           </div>
           {isModelDropdownOpen && (
             <div className="model-dropdown-options">
-              {availableModels.map(model => (
+              {availableProviders.map(provider => (
                 <div 
-                  key={model} 
+                  key={provider} 
                   className="model-option"
-                  onClick={() => handleModelSelect(model)}
+                  onClick={() => handleProviderSelect(provider)}
                 >
-                  {model}
+                  {provider}
                 </div>
               ))}
             </div>

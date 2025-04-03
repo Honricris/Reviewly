@@ -8,6 +8,8 @@ import Login from '../pages/Login';
 import NotFound from '../pages/NotFound';
 import React from 'react';
 import ProtectedRoute from '../components/ProtectedRoute';
+import AdminRoute from '../components/AdminRoute';
+import AdminDashboard from '../pages/admin/Dashboard';
 
 const AppRoutes = () => {
   return (
@@ -21,6 +23,11 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/products" element={<ProductsMenu />} />
+        </Route>
+       
+
+        <Route element={<AdminRoute />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Route>
        
         <Route path="/login" element={<Login />} />
