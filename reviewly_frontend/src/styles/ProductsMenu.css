@@ -1,6 +1,4 @@
-/* ProductsMenu.css - Versión con React Spring */
 
-/* Estructura principal */
 .products-menu-container {
   display: flex;
   flex-direction: column;
@@ -227,44 +225,195 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
+.search-mode-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  position: relative;
+}
 
-/* Estilos para el input con placeholder centrado */
 .search-input-container {
   position: relative;
   width: 100%;
   display: flex;
   align-items: center;
-  margin: 20px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
 }
 
-.centered-placeholder-input {
-  width: 100%;
-  padding: 15px;
+.minimal-search-input {
+  flex: 1;
+  padding: 8px 12px;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-  text-align: center;
+  border: none;
+  background: transparent;
+  color: #333;
+  outline: none;
 }
 
-.centered-placeholder-input::placeholder {
-  text-align: center;
+.minimal-search-input::placeholder {
   color: #999;
-  font-style: italic;
+  font-weight: 300;
+}
+
+.search-icon {
+  color: #999;
+  margin-right: 8px;
 }
 
 .cancel-search-button {
-  position: absolute;
-  right: 10px;
+  margin-left: 12px;
   background: none;
   border: none;
-  color: #ff9900;
-  font-weight: 600;
+  color: #999;
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 4px;
+  font-size: 14px;
+  transition: color 0.2s ease;
 }
 
 .cancel-search-button:hover {
-  background-color: #fffaf0;
+  color: #666;
+}
+
+/* Estilos para las consultas recientes */
+.recent-queries-container {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.recent-queries-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #999;
+  font-size: 14px;
+}
+
+.history-icon {
+  margin-right: 8px;
+  font-size: 18px !important;
+}
+
+.recent-queries-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recent-query-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  color: #666;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.recent-query-item:last-child {
+  border-bottom: none;
+}
+
+.recent-query-item:hover {
+  color: #333;
+  background-color: #fafafa;
+}
+
+.search-input-container:focus-within {
+  border-color: #333;
+}
+
+.search-input-container:focus-within .search-icon {
+  color: #333;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.recent-queries-list {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@media (max-width: 768px) {
+  .search-mode-container {
+    padding: 0 16px;
+  }
+  
+  .minimal-search-input {
+    font-size: 15px;
+  }
+  
+  .recent-query-item {
+    font-size: 14px;
+  }
+}
+
+.loader-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.loader {
+  --s: 28px;
+  height: var(--s);
+  aspect-ratio: 2.5;
+  --_g: #000 90%,#0000;
+  --_g0: no-repeat radial-gradient(farthest-side, var(--_g));
+  --_g1: no-repeat radial-gradient(farthest-side at top, var(--_g));
+  --_g2: no-repeat radial-gradient(farthest-side at bottom, var(--_g));
+  background: 
+    var(--_g0), 
+    var(--_g1), 
+    var(--_g2), 
+    var(--_g0), 
+    var(--_g1), 
+    var(--_g2);
+  background-size: 20% 50%, 20% 25%, 20% 25%;
+  animation: l45 1s infinite;
+  margin-left: 12px;
+}
+
+@keyframes l45 {
+  0% {
+    background-position:
+      calc(0*100%/3) 50%,
+      calc(1*100%/3) calc(50% + var(--s)/8),
+      calc(1*100%/3) calc(50% - var(--s)/8),
+      calc(3*100%/3) 50%,
+      calc(2*100%/3) calc(50% + var(--s)/8),
+      calc(2*100%/3) calc(50% - var(--s)/8);
+  }
+  33% {
+    background-position:
+      calc(0*100%/3) 50%,
+      calc(1*100%/3) 100%,
+      calc(1*100%/3) 0,
+      calc(3*100%/3) 50%,
+      calc(2*100%/3) 100%,
+      calc(2*100%/3) 0;
+  }
+  66% {
+    background-position:
+      calc(1*100%/3) 50%,
+      calc(0*100%/3) 100%,
+      calc(0*100%/3) 0,
+      calc(2*100%/3) 50%,
+      calc(3*100%/3) 100%,
+      calc(3*100%/3) 0;
+  }
+  90%, 100% {
+    background-position:
+      calc(1*100%/3) 50%,
+      calc(0*100%/3) calc(50% + var(--s)/8),
+      calc(0*100%/3) calc(50% - var(--s)/8),
+      calc(2*100%/3) 50%,
+      calc(3*100%/3) calc(50% + var(--s)/8),
+      calc(3*100%/3) calc(50% - var(--s)/8);
+  }
 }

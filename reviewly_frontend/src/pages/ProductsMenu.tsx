@@ -8,8 +8,13 @@ import { getProducts, searchProducts } from '../services/productService';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import { animated, useSpring } from '@react-spring/web';
+import SearchIcon from '@mui/icons-material/Search';
+import HistoryIcon from '@mui/icons-material/History';
+import userService, { UserQuery } from '../services/userService';
 
 const ProductsMenu: React.FC = () => {
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const { applianceProducts, musicalProducts, videoGameProducts, clothesProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -19,7 +24,19 @@ const ProductsMenu: React.FC = () => {
   const [priceRange, setPriceRange] = useState<string>("all");
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [searchActive, setSearchActive] = useState(false);
+  const [recentQueries, setRecentQueries] = useState<UserQuery[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+
+  const loadRecentQueries = async () => {
+    try {
+      const queries = await userService.getRecentQueries();
+      setRecentQueries(queries);
+    } catch (error) {
+      console.error('Error loading recent queries:', error);
+    }
+  };
+
 
   const toggleChat = () => {
     setShowChat((prev) => !prev);
@@ -47,6 +64,7 @@ const ProductsMenu: React.FC = () => {
   
 
   const handleSearchFocus = () => {
+    loadRecentQueries()
     setSearchActive(true);
     setTimeout(() => {
       if (searchInputRef.current) {
@@ -60,12 +78,18 @@ const ProductsMenu: React.FC = () => {
   const handleSearchSubmit = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       try {
+        setSearchLoading(true);
+        setRecentQueries([]);
         setGridMinHeight();
         const searchResults = await searchProducts(searchQuery.trim());
         setProducts(searchResults.top_products || []);
+        await userService.saveQuery(searchQuery.trim());
+
       } catch (error) {
         console.error('Error in search:', error);
         setProducts([]);
+      } finally {
+        setSearchLoading(false);
       }
     }
   };
@@ -206,30 +230,61 @@ const ProductsMenu: React.FC = () => {
             </div>
 
             {searchActive ? (
-              <div className="search-mode-container">
-                <div className="search-input-container">
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="what are you looking for?"
-                    className="centered-placeholder-input"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearchSubmit}
-                    autoFocus
-                  />
-                  <button 
-                    className="cancel-search-button"
-                    onClick={handleCancelSearch}
-                  >
-                    Cancel
-                  </button>
-                </div>
-                {products.length > 0 && (
-                  <ProductsDisplay title="Search Results" products={products} />
-                )}
+            <div className="search-mode-container">
+              <div className="search-input-container">
+                <SearchIcon className="search-icon" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="what are you looking for?"
+                  className="minimal-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchSubmit}
+                  autoFocus
+                />
+                <button 
+                  className="cancel-search-button"
+                  onClick={handleCancelSearch}
+                >
+                  Cancel
+                </button>
               </div>
-            ) : (
+
+              {searchLoading && (
+                <div className="loader-container">
+                  <div className="loader"></div>
+                </div>
+              )}
+
+              {!searchLoading && recentQueries.length > 0 && (
+                <div className="recent-queries-container">
+                  <div className="recent-queries-header">
+                    <HistoryIcon className="history-icon" />
+                    <span>Recent searches</span>
+                  </div>
+                  <ul className="recent-queries-list">
+                    {recentQueries.map((query) => (
+                      <li 
+                        key={query.id}
+                        className="recent-query-item"
+                        onClick={() => {
+                          setSearchQuery(query.query_text);
+                          searchInputRef.current?.focus();
+                        }}
+                      >
+                        {query.query_text}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {!searchLoading && products.length > 0 && (
+                <ProductsDisplay title="Search Results" products={products} />
+              )}
+            </div>
+          ) : (
               <div className={`products-display-wrapper ${showChat ? 'with-chat' : ''}`}>
                 <ProductsDisplay 
                   title="Latest in Appliances" 
