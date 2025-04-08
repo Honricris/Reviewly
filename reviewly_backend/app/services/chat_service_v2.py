@@ -8,20 +8,24 @@ from app.services.customer_function_handlers import CustomerHandlers
 
 load_dotenv()
 class ChatService:
-    #Cambiar endpoint barra.
-    #Mejorar frontend productos y chat y producto especifico
 
+    _instances = {}
 
-    #One tap google ? 
-    #Arreglar remember me. 
+    @classmethod
+    def get_instance(cls, user_id):
+        """Obtener o crear una instancia de ChatService para un user_id específico"""
+        if user_id not in cls._instances:
+            cls._instances[user_id] = cls(user_id)
+        return cls._instances[user_id]
 
-    #arreglar go to reviews
-    #Elegir modelos gemini 4o mini qwen deepseek 
-
-    #Modificar algoritmo search, para repetir query y modificar busqueda inicial
-    # Incluir imagenes de producto?
-    def __init__(self, session_id):
-        self.session_id = session_id
+    @classmethod
+    def remove_instance(cls, user_id):
+        """Eliminar una instancia cuando ya no sea necesaria"""
+        if user_id in cls._instances:
+            del cls._instances[user_id]
+    
+    def __init__(self, user_id):
+        self.user_id = user_id
 
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
         self.headers = {

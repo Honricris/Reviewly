@@ -46,10 +46,14 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onSearchFocus, onSearchBlur }
     navigate('/products'); 
   };
 
-  const handleLogout = () => {
-    setSearchQuery(''); 
-    logout(); 
-    navigate('/login'); 
+  const handleLogout = async () => {
+    try {
+      await logout(); 
+      setSearchQuery(''); 
+      navigate('/login'); 
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (

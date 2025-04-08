@@ -4,6 +4,7 @@ from app.services.auth_service import AuthService
 from app.models.user import User
 from ..utils.jwt_utils import generate_access_token
 from flask import current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 api = Namespace('auth', description='Operaciones de autenticación')
 
@@ -106,4 +107,24 @@ class GitHubAuth(Resource):
             "user_id": user.id,
             "email": user.email,
             "access_token": access_token
+        }, 200
+    
+
+logout_model = api.model('Logout', {
+    'message': fields.String(description='Mensaje de confirmación')
+})
+
+@api.route('/logout')
+class Logout(Resource):
+    @jwt_required()
+    @api.response(200, 'Success', logout_model)
+    def post(self):
+        current_user_id = get_jwt_identity()
+        
+        from app.services.chat_service_v2 import ChatService
+        ChatService.remove_instance(current_user_id)
+    
+        
+        return {
+            "message": "Sesión cerrada exitosamente. Sesión de chat eliminada."
         }, 200

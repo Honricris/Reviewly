@@ -55,4 +55,12 @@ export const AuthService = {
     }
   },
 
+  logout: async () => {
+    try {
+      const response = await apiClient.post('/auth/logout');
+      return response.data;
+    } catch (error) {
+      throw new Error('Error al cerrar sesión');
+    }
+  },
 };

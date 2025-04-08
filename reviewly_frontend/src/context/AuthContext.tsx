@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { AuthService } from '../services/authService'; 
 
 interface User {
     id: string;
@@ -34,7 +35,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return decoded
     };
 
-    const logout = () => {
+    const logout = async () => {
+        await AuthService.logout();
         localStorage.removeItem('token');
         setUser(null);
     };
