@@ -2,7 +2,7 @@ from flask_restx import Namespace, Resource, fields
 from flask_jwt_extended import jwt_required
 
 from app.services.product_service import (
-    get_all_products, get_product_by_id, create_product, update_product, delete_product, get_all_categories,searchProduct
+    get_all_products, get_product_by_id, create_product, update_product, delete_product, get_all_categories,searchProduct,autocomplete_products
 )
 from app.services.review_service import get_reviews_by_product
 from flask import request
@@ -31,12 +31,23 @@ product_model = api.model('Product', {
     'created_at': fields.DateTime(description='Product creation time', example="2023-12-01T12:00:00Z")
 })
 
+autocomplete_model = api.model('Autocomplete', {
+    'search_term': fields.String(required=True, description='Search term used for autocomplete', example="smart"),
+    'suggestions': fields.List(fields.Nested(api.model('Suggestion', {
+        'product_id': fields.Integer(description='Product ID'),
+        'title': fields.String(description='Product title'),
+        'main_category': fields.String(description='Product category'),
+        'price': fields.Float(description='Product price')
+    })))
+})
+
 @api.route('/')
 class ProductList(Resource):
     @api.param('name', 'Search term for product title', type=str) 
     @api.param('category', 'Category filter for products', type=str)
     @api.param('price_min', 'Minimum price filter for products', type=float)
     @api.param('price_max', 'Maximum price filter for products', type=float)
+    @api.param('store', 'Store filter for products (case insensitive)', type=str)
     @api.param('limit', 'Number of products to return', type=int, default=10)
     @api.param('page', 'Page number for pagination', type=int, default=1)
     @jwt_required()
@@ -45,11 +56,12 @@ class ProductList(Resource):
         category = request.args.get('category')
         price_min = request.args.get('price_min', type=float)  
         price_max = request.args.get('price_max', type=float) 
+        store = request.args.get('store')
         limit = request.args.get('limit', type=int)
         page = request.args.get('page', type=int)
 
 
-        products = get_all_products(category=category, price_min=price_min, price_max=price_max, name=name, limit=limit, page=page)
+        products = get_all_products(category=category, price_min=price_min, price_max=price_max, name=name,store=store, limit=limit, page=page)
         return products, 200
 
     @api.expect(product_model)
@@ -101,6 +113,7 @@ product_search_model = api.model('ProductSearch', {
 @api.route('/search')
 class ProductSearch(Resource):
     @api.expect(product_search_model)
+    @jwt_required()
     def post(self):
         data = request.json
         query = data.get('query')
@@ -121,6 +134,7 @@ class ProductSearch(Resource):
 
 @api.route('/categories')
 class ProductCategories(Resource):
+    @jwt_required()
     def get(self):
         categories = get_all_categories() 
         return {"categories": categories}, 200
@@ -129,6 +143,7 @@ class ProductCategories(Resource):
 class ProductReviews(Resource):
     @api.param('page', 'Page number for review pagination', type=int, default=1)
     @api.param('limit', 'Number of reviews to return', type=int, default=10)
+    @jwt_required()
     def get(self, id):
         page = int(request.args.get('page', 1))
         per_page = 10
@@ -149,4 +164,29 @@ class ProductReviews(Resource):
             "page": page,
             "per_page": per_page,
             "total_pages": (total_reviews + per_page - 1) // per_page
+        }, 200
+
+@api.route('/autocomplete')
+class ProductAutocomplete(Resource):
+    @api.doc(params={
+        'term': 'Partial search term to get suggestions for (min 2 characters)',
+        'limit': 'Maximum number of suggestions to return (default 3, max 10)'
+    })
+    @api.marshal_with(autocomplete_model)
+    @jwt_required()
+    def get(self):
+        search_term = request.args.get('term', '').strip()
+        limit = min(int(request.args.get('limit', 3)), 10) 
+        
+        if len(search_term) < 2:
+            return {
+                "search_term": search_term,
+                "suggestions": []
+            }, 200
+        
+        suggestions = autocomplete_products(search_term, limit)
+        
+        return {
+            "search_term": search_term,
+            "suggestions": suggestions
         }, 200

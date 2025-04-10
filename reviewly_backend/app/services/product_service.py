@@ -8,7 +8,7 @@ from app.models.productfeature import ProductFeature
 from app.models.review import Review 
 model = get_model()
 
-def get_all_products(category=None, price_min=None, price_max=None, name=None, page=1, limit=43):
+def get_all_products(category=None, price_min=None, price_max=None, name=None,store=None, page=1, limit=43):
     if page is None:
         page = 1
     print(f"Inicio del método: category={category}, page={page}, limit={limit}")
@@ -23,7 +23,9 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None, p
         query = query.filter(Product.main_category == category)
         
 
-
+    if store:
+            query = query.filter(Product.store.ilike(f'%{store}%'))
+            
     if price_min is not None:
         query = query.filter(Product.price >= price_min)
 
@@ -190,7 +192,6 @@ def searchProduct(query: str, top_n=5, category: str = None, min_price: float = 
     for product in products:
         large_images = [img.get("large") for img in product.images if isinstance(img, dict) and "large" in img] if product.images else []
         
-        # Obtener las características del producto desde la consulta combinada
         features = next((row.features for row in combined_query if row.product_id == product.product_id), [])
         
         result.append({
@@ -290,7 +291,6 @@ def create_product(data: dict) -> dict:
         if product.features:
             for feature in product.features:
                 try:
-                    # Generar embedding para la feature
                     embedding = model.encode([feature])[0]  
 
                     new_feature = ProductFeature(
@@ -412,3 +412,33 @@ def delete_product(product_id: int) -> bool:
 def get_all_categories():
     categories = Product.query.with_entities(Product.main_category).distinct().all()
     return [category[0] for category in categories]
+
+
+def autocomplete_products(search_term: str, limit: int = 3) -> list:
+    """
+    Busca productos que coincidan con el término de búsqueda para autocompletar.
+    
+    Args:
+        search_term (str): Texto parcial para buscar coincidencias
+        limit (int): Número máximo de sugerencias a devolver
+        
+    Returns:
+        list: Lista de productos sugeridos
+    """
+    if not search_term or len(search_term.strip()) < 2:
+        return []
+    
+    products = Product.query.filter(
+        Product.title.ilike(f'%{search_term}%')
+    ).order_by(
+        Product.rating_number.desc()  
+    ).limit(limit).all()
+    
+    suggestions = []
+    for product in products:
+        suggestions.append({
+            "product_id": product.product_id,
+            "title": product.title,
+        })
+    
+    return suggestions

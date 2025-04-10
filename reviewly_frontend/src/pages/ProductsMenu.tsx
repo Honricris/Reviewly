@@ -4,7 +4,7 @@ import useProductsMenu from '../hooks/useProductsMenu';
 import Header from '../components/Header';
 import '../styles/ProductsMenu.css';
 import ChatBubble from '../components/ChatBubble';
-import { getProducts, searchProducts } from '../services/productService';
+import { getProducts, searchProducts, autocompleteProducts, getCategories } from '../services/productService';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import { animated, useSpring } from '@react-spring/web';
@@ -14,6 +14,10 @@ import userService, { UserQuery } from '../services/userService';
 
 const ProductsMenu: React.FC = () => {
   const [searchLoading, setSearchLoading] = useState(false);
+  const [autocompleteLoading, setAutocompleteLoading] = useState(false);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const { applianceProducts, musicalProducts, videoGameProducts, clothesProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
@@ -26,7 +30,85 @@ const ProductsMenu: React.FC = () => {
   const [searchActive, setSearchActive] = useState(false);
   const [recentQueries, setRecentQueries] = useState<UserQuery[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const [filtersApplied, setFiltersApplied] = useState(false); // New state to track if filters are applied
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const fetchedCategories = await getCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategories(['Appliances', 'Musical_Instruments', 'Videogames', 'Clothes']);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchFilteredProducts = async () => {
+      if (searchActive) return;
+
+      const hasFilters = selectedCategory !== "" || selectedStore !== "" || priceRange !== "all";
+      setFiltersApplied(hasFilters);
+
+      if (!hasFilters) {
+        setProducts([]);
+        return;
+      }
+
+      setFilterLoading(true);
+      try {
+        let price_min, price_max;
+        
+        switch (priceRange) {
+          case "0-25":
+            price_min = 0;
+            price_max = 25;
+            break;
+          case "25-50":
+            price_min = 25;
+            price_max = 50;
+            break;
+          case "50-100":
+            price_min = 50;
+            price_max = 100;
+            break;
+          case "100-500":
+            price_min = 100;
+            price_max = 500;
+            break;
+          case "500+":
+            price_min = 500;
+            price_max = undefined;
+            break;
+          default:
+            price_min = undefined;
+            price_max = undefined;
+        }
+
+        const response = await getProducts(
+          1,
+          10,
+          selectedCategory || undefined,
+          undefined,
+          price_min,
+          price_max,
+          selectedStore || undefined
+        );
+        
+        setProducts(response.products || []);
+      } catch (error) {
+        console.error('Error fetching filtered products:', error);
+        setProducts([]);
+      } finally {
+        setFilterLoading(false);
+      }
+    };
+
+    fetchFilteredProducts();
+  }, [selectedCategory, selectedStore, priceRange, searchActive]);
 
   const loadRecentQueries = async () => {
     try {
@@ -37,13 +119,30 @@ const ProductsMenu: React.FC = () => {
     }
   };
 
+  const handleAutocomplete = async (query: string) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
 
+    try {
+      setAutocompleteLoading(true);
+      const result = await autocompleteProducts(query);
+      setSuggestions(result.suggestions || []);
+    } catch (error) {
+      console.error('Error in autocomplete:', error);
+      setSuggestions([]);
+    } finally {
+      setAutocompleteLoading(false);
+    }
+  };
+  
   const toggleChat = () => {
     setShowChat((prev) => !prev);
   };
 
   const toggleFilter = (filterName: string) => {
-    setOpenFilter(openFilter === filterName ? null : filterName);
+    setOpenFilter((prev) => (prev === filterName ? null : filterName));
   };
 
   const selectOption = (type: string, value: string) => {
@@ -60,11 +159,9 @@ const ProductsMenu: React.FC = () => {
     const currentHeight = grid.offsetHeight;
     grid.style.minHeight = `${currentHeight}px`;
   };
-  
-  
 
   const handleSearchFocus = () => {
-    loadRecentQueries()
+    loadRecentQueries();
     setSearchActive(true);
     setTimeout(() => {
       if (searchInputRef.current) {
@@ -73,18 +170,35 @@ const ProductsMenu: React.FC = () => {
     }, 0);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (query.trim().length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        handleAutocomplete(query);
+      }, 500);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
   const handleSearchBlur = () => {};
 
   const handleSearchSubmit = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       try {
         setSearchLoading(true);
+        setSuggestions([]);
         setRecentQueries([]);
         setGridMinHeight();
         const searchResults = await searchProducts(searchQuery.trim());
         setProducts(searchResults.top_products || []);
         await userService.saveQuery(searchQuery.trim());
-
       } catch (error) {
         console.error('Error in search:', error);
         setProducts([]);
@@ -95,10 +209,27 @@ const ProductsMenu: React.FC = () => {
   };
 
   const handleCancelSearch = () => {
+    setSuggestions([]);
     setSearchQuery("");
     setProducts([]);
     setSearchActive(false);
   };
+
+  const handleSuggestionClick = (suggestion: any) => {
+    setSearchQuery(suggestion.title);
+    setSuggestions([]);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const arrowAnimation = useSpring({
     transform: openFilter ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -123,30 +254,100 @@ const ProductsMenu: React.FC = () => {
     value: string;
     options: { value: string; label: string }[];
   }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [inputValue, setInputValue] = useState(value);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const isOpen = openFilter === type;
+  
+    const handleClick = () => {
+      if (type === 'store') {
+        setIsEditing(true);
+        setInputValue("");
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 0);
+      } else {
+        toggleFilter(type); 
+      }
+    };
+  
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInputValue(e.target.value);
+    };
+  
+    const handleInputBlur = () => {
+      setIsEditing(false);
+      if (inputValue.trim() === '') {
+        setInputValue("All Stores");
+        selectOption(type, "");
+      }
+      if (inputValue.trim() !== '' && inputValue.trim() !== "All Stores") {
+        selectOption(type, inputValue.trim());
+      }
+    };
+  
+    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        setIsEditing(false);
+        if (inputValue.trim() === '') {
+          setInputValue("All Stores");
+          selectOption(type, "");
+        }
+        if (inputValue.trim() !== '' && inputValue.trim() !== "All Stores") {
+          selectOption(type, inputValue.trim());
+        }
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+    };
+  
     return (
-      <div className={`filter-button ${openFilter === type ? 'active' : ''}`}>
-        <div className="filter-content" onClick={() => toggleFilter(type)}>
+      <div className={`filter-button ${type === 'store' ? 'store-filter' : ''} ${openFilter === type ? 'active' : ''}`}>
+        <div className="filter-content" onClick={handleClick}>
           <span className="filter-label">{label}</span>
           <div className="filter-value-container">
-            <span className="filter-value">{value}</span>
-            <animated.div style={arrowAnimation}>
-              {openFilter === type ? (
-                <ArrowDropUpIcon className="dropdown-icon" />
+            {type === 'store' ? (
+              isEditing ? (
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="store-input"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder={isEditing ? "" : "All Stores"} 
+                />
               ) : (
-                <ArrowDropDownIcon className="dropdown-icon" />
-              )}
-            </animated.div>
+                <span className="filter-value">
+                  {inputValue === "All Stores" ? "All Stores" : inputValue}
+                </span>
+              )
+            ) : (
+              <>
+                <span className="filter-value">{value}</span>
+                <animated.div style={arrowAnimation}>
+                  {openFilter === type ? (
+                    <ArrowDropUpIcon className="dropdown-icon" />
+                  ) : (
+                    <ArrowDropDownIcon className="dropdown-icon" />
+                  )}
+                </animated.div>
+              </>
+            )}
           </div>
         </div>
   
-        {openFilter === type && (
+        {openFilter === type && type !== 'store' && (
           <animated.div style={optionsAnimation} className="filter-options">
             {options.map((option) => (
               <div
                 key={option.value}
                 className={`option-item ${
                   (type === 'category' && selectedCategory === option.value) ||
-                  (type === 'store' && selectedStore === option.value) ||
                   (type === 'price' && priceRange === option.value)
                     ? 'selected'
                     : ''
@@ -161,6 +362,14 @@ const ProductsMenu: React.FC = () => {
       </div>
     );
   };
+
+  const categoryOptions = [
+    { value: "", label: "All Categories" },
+    ...categories.map(category => ({
+      value: category,
+      label: category.replace(/_/g, ' ')
+    }))
+  ];
 
   return (
     <div className="products-menu-container">
@@ -185,26 +394,14 @@ const ProductsMenu: React.FC = () => {
                   type="category"
                   label="Category"
                   value={selectedCategory || "All Categories"}
-                  options={[
-                    { value: "", label: "All Categories" },
-                    { value: "Appliances", label: "Appliances" },
-                    { value: "Musical_Instruments", label: "Musical Instruments" },
-                    { value: "Videogames", label: "Videogames" },
-                    { value: "Clothes", label: "Clothes" }
-                  ]}
+                  options={categoryOptions}
                 />
                 
                 <FilterButton
                   type="store"
                   label="Store"
                   value={selectedStore || "All Stores"}
-                  options={[
-                    { value: "", label: "All Stores" },
-                    { value: "Amazon US", label: "Amazon US" },
-                    { value: "Amazon UK", label: "Amazon UK" },
-                    { value: "Amazon DE", label: "Amazon DE" },
-                    { value: "Amazon ES", label: "Amazon ES" }
-                  ]}
+                  options={[]}
                 />
                 
                 <FilterButton
@@ -230,82 +427,115 @@ const ProductsMenu: React.FC = () => {
             </div>
 
             {searchActive ? (
-            <div className="search-mode-container">
-              <div className="search-input-container">
-                <SearchIcon className="search-icon" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="what are you looking for?"
-                  className="minimal-search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearchSubmit}
-                  autoFocus
-                />
-                <button 
-                  className="cancel-search-button"
-                  onClick={handleCancelSearch}
-                >
-                  Cancel
-                </button>
-              </div>
-
-              {searchLoading && (
-                <div className="loader-container">
-                  <div className="loader"></div>
+              <div className="search-mode-container">
+                <div className="search-input-container">
+                  <SearchIcon className="search-icon" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="what are you looking for?"
+                    className="minimal-search-input"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleSearchSubmit}
+                    autoFocus
+                  />
+                  <button 
+                    className="cancel-search-button"
+                    onClick={handleCancelSearch}
+                  >
+                    Cancel
+                  </button>
                 </div>
-              )}
 
-              {!searchLoading && recentQueries.length > 0 && (
-                <div className="recent-queries-container">
-                  <div className="recent-queries-header">
-                    <HistoryIcon className="history-icon" />
-                    <span>Recent searches</span>
+                {searchLoading && (
+                  <div className="loader-container">
+                    <div className="loader"></div>
                   </div>
-                  <ul className="recent-queries-list">
-                    {recentQueries.map((query) => (
-                      <li 
-                        key={query.id}
-                        className="recent-query-item"
-                        onClick={() => {
-                          setSearchQuery(query.query_text);
-                          searchInputRef.current?.focus();
-                        }}
-                      >
-                        {query.query_text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                )}
 
-              {!searchLoading && products.length > 0 && (
-                <ProductsDisplay title="Search Results" products={products} />
-              )}
-            </div>
-          ) : (
+                {!searchLoading && suggestions.length > 0 && (
+                  <div className="suggestions-container">
+                    <div className="suggestions-header">
+                      <SearchIcon className="search-icon" />
+                      <span>Suggestions</span>
+                    </div>
+                    <ul className="suggestions-list">
+                      {suggestions.map((suggestion, index) => (
+                        <li 
+                          key={index}
+                          className="suggestion-item"
+                          onClick={() => handleSuggestionClick(suggestion)}
+                        >
+                          {suggestion.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!searchLoading && suggestions.length === 0 && recentQueries.length > 0 && (
+                  <div className="recent-queries-container">
+                    <div className="recent-queries-header">
+                      <HistoryIcon className="history-icon" />
+                      <span>Recent searches</span>
+                    </div>
+                    <ul className="recent-queries-list">
+                      {recentQueries.map((query) => (
+                        <li 
+                          key={query.id}
+                          className="recent-query-item"
+                          onClick={() => {
+                            setSearchQuery(query.query_text);
+                            searchInputRef.current?.focus();
+                          }}
+                        >
+                          {query.query_text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!searchLoading && products.length > 0 && (
+                  <ProductsDisplay title="Search Results" products={products} />
+                )}
+              </div>
+            ) : (
               <div className={`products-display-wrapper ${showChat ? 'with-chat' : ''}`}>
-                <ProductsDisplay 
-                  title="Latest in Appliances" 
-                  category="Appliances" 
-                  products={applianceProducts} 
-                />
-                <ProductsDisplay 
-                  title="Latest in Musical Instruments" 
-                  category="Musical_Instruments" 
-                  products={musicalProducts} 
-                />
-                <ProductsDisplay 
-                  title="Latest in Videogames" 
-                  category="Videogames" 
-                  products={videoGameProducts} 
-                />
-                <ProductsDisplay 
-                  title="Latest in Clothes" 
-                  category="Clothes" 
-                  products={clothesProducts} 
-                />
+                {filterLoading ? (
+                  <div className="loader-container">
+                    <div className="loader"></div>
+                  </div>
+                ) : filtersApplied && products.length > 0 ? (
+                  <ProductsDisplay 
+                    title="Search Results" 
+                    products={products} 
+                  />
+                ) : (
+                  <>
+                    <ProductsDisplay 
+                      title="Latest in Appliances" 
+                      category="Appliances" 
+                      products={applianceProducts} 
+                    />
+                    <ProductsDisplay 
+                      title="Latest in Musical Instruments" 
+                      category="Musical_Instruments" 
+                      products={musicalProducts} 
+                    />
+                    <ProductsDisplay 
+                      title="Latest in Videogames" 
+                      category="Videogames" 
+                      products={videoGameProducts} 
+                    />
+                    <ProductsDisplay 
+                      title="Latest in Clothes" 
+                      category="Clothes" 
+                      products={clothesProducts} 
+                    />
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -318,7 +548,6 @@ const ProductsMenu: React.FC = () => {
                 if (botAnswer.products) {
                   setProducts(botAnswer.products);
                   setSearchActive(true);
-
                 }
               }
             }}

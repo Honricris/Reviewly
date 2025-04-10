@@ -1,7 +1,15 @@
 import apiClient from './apiClient';
 
 
-export const getProducts = async (page: number, limit?: number, category?: string, name?: string, price_min?: number, price_max?: number) => {
+export const getProducts = async (
+  page: number,
+  limit?: number,
+  category?: string,
+  name?: string,
+  price_min?: number,
+  price_max?: number,
+  store?: string
+) => {
   try {
     const response = await apiClient.get('/products/', {
       params: {
@@ -11,6 +19,7 @@ export const getProducts = async (page: number, limit?: number, category?: strin
         ...(name && { name }),
         ...(price_min !== undefined && { price_min }),
         ...(price_max !== undefined && { price_max }),
+        ...(store && { store }),
       },
     });
     return response.data;
@@ -19,7 +28,6 @@ export const getProducts = async (page: number, limit?: number, category?: strin
     throw error;
   }
 };
-
 
 export const getProductById = async (productId: string) => {
   try {
@@ -42,7 +50,6 @@ export const getProductReviews = async (productId: string, page: number = 1) => 
   }
 };
 
-/* Usa el servicio de busqueda de productos*/
 export const searchProducts = async (query: string, top_n?: number, category?: string, min_price?: number, max_price?: number) => {
   try {
     const response = await apiClient.post('/products/search', {
@@ -55,6 +62,31 @@ export const searchProducts = async (query: string, top_n?: number, category?: s
     return response.data;
   } catch (error) {
     console.error('Error searching products:', error);
+    throw error;
+  }
+};
+
+export const autocompleteProducts = async (searchTerm: string, limit: number = 3) => {
+  try {
+    const response = await apiClient.get('/products/autocomplete', {
+      params: {
+        term: searchTerm,
+        limit
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error in autocomplete:', error);
+    throw error;
+  }
+};
+
+export const getCategories = async () => {
+  try {
+    const response = await apiClient.get('/products/categories');
+    return response.data.categories;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
     throw error;
   }
 };

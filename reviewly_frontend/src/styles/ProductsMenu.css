@@ -54,6 +54,7 @@
   overflow: hidden;
   transition: all 0.2s ease;
   z-index: 10;
+  height: 70px;
 }
 
 .filter-button:hover {
@@ -63,12 +64,14 @@
 .filter-button.active {
   border-color: #ff9900;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  height: auto;
 }
 
 .filter-content {
   padding: 0.9rem 1.2rem;
   display: flex;
   flex-direction: column;
+  
 }
 
 .filter-label {
@@ -416,4 +419,82 @@
       calc(3*100%/3) calc(50% + var(--s)/8),
       calc(3*100%/3) calc(50% - var(--s)/8);
   }
+}
+
+
+.suggestions-container {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #999;
+  font-size: 14px;
+}
+
+.suggestions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  color: #666;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  color: #333;
+  background-color: #fafafa;
+}
+
+.suggestions-list {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+
+.store-filter {
+  font-size: inherit;
+  color: inherit;
+  width: 200px;
+  padding: 0;
+  margin: 0;
+  
+}
+
+
+.filter-value-container {
+  color: inherit;
+  opacity: 1;
+  border: none ;
+  
+}
+
+.store-filter .filter-content {
+  gap: 0.3rem;
+}
+
+
+.store-input,
+.store-input:focus,
+.store-input:active,
+.store-input:hover {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  
+  
 }
