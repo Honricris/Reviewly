@@ -5,8 +5,25 @@
   min-height: 100vh;
   background-color: #F0F0F0;
   padding: 1rem;
+  overflow-y: auto;
 }
 
+
+::-webkit-scrollbar {
+  width: 6px; /* Finer scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 3px; /* Adjusted for finer width */
+  background-color: #e7e7e7; /* Light gray track to blend with #F0F0F0 */
+  border: 1px solid #cacaca;
+  box-shadow: inset 0 0 4px rgba(136, 136, 136, 0.3); /* Subtle shadow for depth */
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 3px; /* Adjusted for finer width */
+  background-color: #969696; /* Black thumb */
+}
 .products-content {
   display: flex;
   flex-direction: column;
