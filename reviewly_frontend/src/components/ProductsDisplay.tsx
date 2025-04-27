@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 import { Button, Stack } from '@mui/material';
 import { getProducts } from '../services/productService';
+import userService from '../services/userService';
 
 interface ProductsDisplayProps {
   title: string;
@@ -26,6 +27,20 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); 
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const ids = await userService.getFavorites();
+        setFavoriteIds(ids);
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+      }
+    };
+
+    loadFavorites();
+  }, []); 
 
   useEffect(() => {
     const fetchProducts = async (page: number) => {
@@ -74,6 +89,7 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
               store={product.store}
               price={product.price}
               averageRating={product.average_rating}
+              favoriteIds={favoriteIds}
             />
           ))
         ) : (

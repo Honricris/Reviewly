@@ -2,6 +2,8 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app import db, create_app
+from app.models.product import Product
+from sqlalchemy.exc import SQLAlchemyError
 
 class UserService:
     VALID_ROLES = {"user", "admin"}
@@ -102,3 +104,66 @@ class UserService:
                 raise e
             finally:
                 session.close()
+
+    @staticmethod
+    def get_user_favorite_ids(user_id):
+        """Get list of favorite product IDs for a user."""
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                return None, "User not found"
+            favorite_ids = [product.product_id for product in user.favorites]
+            return favorite_ids, None
+        except SQLAlchemyError as e:
+            return None, str(e)
+
+    @staticmethod
+    def get_user_favorites(user_id):
+        """Get list of user's favorite products (mantenido por si se necesita en otro lugar)."""
+        try:
+            user = User.query.get(user_id)
+            if not user:
+                return None, "User not found"
+            return user.favorites, None
+        except SQLAlchemyError as e:
+            return None, str(e)
+
+    @staticmethod
+    def add_to_favorites(user_id, product_id):
+        try:
+            user = User.query.get(user_id)
+            product = Product.query.get(product_id)
+            
+            if not user:
+                return False, "User not found"
+            if not product:
+                return False, "Product not found"
+            if product in user.favorites:
+                return False, "Product already in favorites"
+                
+            user.favorites.append(product)
+            db.session.commit()
+            return True, "Product added to favorites"
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return False, str(e)
+
+    @staticmethod
+    def remove_from_favorites(user_id, product_id):
+        try:
+            user = User.query.get(user_id)
+            product = Product.query.get(product_id)
+            
+            if not user:
+                return False, "User not found"
+            if not product:
+                return False, "Product not found"
+            if product not in user.favorites:
+                return False, "Product not in favorites"
+                
+            user.favorites.remove(product)
+            db.session.commit()
+            return True, "Product removed from favorites"
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return False, str(e)

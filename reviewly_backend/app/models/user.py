@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, TIMESTAMP
 from sqlalchemy.sql import func
 from app import db
+from sqlalchemy.orm import relationship
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -11,6 +12,13 @@ class User(db.Model):
     password_hash = Column(String(255), nullable=True)
     created_at = Column(TIMESTAMP, default=func.now())
     role = Column(String(50), nullable=False, default="user") 
+    favorites = relationship('Product', secondary='user_favorites',
+                           backref='favorited_by')
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email})>"
+    
+    user_favorites = db.Table('user_favorites',
+        db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+        db.Column('product_id', db.Integer, db.ForeignKey('products.product_id'), primary_key=True)
+    )

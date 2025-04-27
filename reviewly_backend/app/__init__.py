@@ -86,13 +86,13 @@ def create_app():
         return jsonify({"message": "Missing Authorization Header"}), 401
 
 
-    from app.routes import product_routes, review_routes, chat_routes, health_routes, auth_routes, user_queries
+    from app.routes import product_routes, review_routes, chat_routes, health_routes, auth_routes, user_queries, user_routes
     api.add_namespace(product_routes.api, path=f"{API_PREFIX}/products")
     api.add_namespace(review_routes.api, path=f"{API_PREFIX}/reviews")
     api.add_namespace(chat_routes.api, path=f"{API_PREFIX}/chat")
     api.add_namespace(health_routes.api, path="/health")
     api.add_namespace(auth_routes.api, path=f"{API_PREFIX}/auth") 
     api.add_namespace(user_queries.api, path=f"{API_PREFIX}/user") 
-
+    api.add_namespace(user_routes.api, path=f"{API_PREFIX}/user") 
 
     return app
