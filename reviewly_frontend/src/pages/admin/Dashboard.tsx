@@ -1,20 +1,51 @@
 import '../../styles/AdminDashboard.css';
 import ChatBubble from '../../components/ChatBubble';
 import React, { useState, useEffect, useRef } from 'react';
+import userService from '../../services/userService';
+import { getProductCount } from '../../services/productService';
 
 const AdminDashboard = () => {
     const [showChat, setShowChat] = useState(false);
-    
+    const [userCount, setUserCount] = useState<number | null>(null);
+    const [productCount, setProductCount] = useState<number | null>(null);
+
+    useEffect(() => {
+        const fetchCounts = async () => {
+        try {
+            const [userCount, productCount] = await Promise.all([
+            userService.getUserCount(),
+            getProductCount(),
+            ]);
+            setUserCount(userCount);
+            setProductCount(productCount);
+        } catch (error) {
+            console.error('Failed to fetch counts:', error);
+            setUserCount(0);
+            setProductCount(0);
+        }
+        };
+        fetchCounts();
+    }, []);
 
     const toggleChat = () => {
         setShowChat((prev) => !prev);
       };
       
     const stats = [
-        { title: "Usuarios totales", value: "1,342", change: "+12%", trend: "up" },
-        { title: "Productos", value: "563", change: "+5%", trend: "up" },
-        { title: "Órdenes hoy", value: "87", change: "-2%", trend: "down" },
-        { title: "Ingresos", value: "$12,345", change: "+18%", trend: "up" }
+        {
+            title: 'Total Users',
+            value: userCount !== null ? userCount.toString() : 'Loading...',
+            change: userCount !== null ? '+12%' : '',
+            trend: 'up',
+          },
+        {
+        title: 'Products',
+        value: productCount !== null ? productCount.toString() : 'Loading...',
+        change: productCount !== null ? '+5%' : '',
+        trend: 'up',
+        },
+        { title: "Products saved today", value: "87", change: "-2%", trend: "down" },
+        { title: "Income", value: "$12,345", change: "+18%", trend: "up" }
     ];
 
     const recentOrders = [
@@ -27,7 +58,7 @@ const AdminDashboard = () => {
     return (
         <div className="admin-dashboard">
             <header className="dashboard-header">
-                <h1>Panel de Administración</h1>
+                <h1>Admin Panel</h1>
                 <div className="user-profile">
                     <span>Admin</span>
                     <div className="avatar">A</div>

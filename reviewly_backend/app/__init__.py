@@ -46,24 +46,25 @@ def create_app():
     
     db.init_app(app)
 
-    from app.models.user import User
-    from app.models.product import Product
-    from app.models.productdetail import ProductDetail
-    from app.models.productfeature import ProductFeature
-    from app.models.review import Review
-    from app.models.amazonuser import AmazonUser
-    from app.models.user_query import UserQuery
+    
 
     api = Api(
         app,
         version="1.0",
         title="Reviewly API",
-        description="Documentación de la API para gestionar productos, reseñas y chat.",
+        description="Reviewly API documentation.",
         doc="/"  
     )
 
     with app.app_context():
         try:
+            from app.models.user import User
+            from app.models.product import Product
+            from app.models.productdetail import ProductDetail
+            from app.models.productfeature import ProductFeature
+            from app.models.review import Review
+            from app.models.amazonuser import AmazonUser
+            from app.models.user_query import UserQuery
             db.create_all()
             db.session.execute(text('SELECT 1'))
             print("Conexión exitosa a la base de datos")
@@ -91,7 +92,7 @@ def create_app():
     api.add_namespace(chat_routes.api, path=f"{API_PREFIX}/chat")
     api.add_namespace(health_routes.api, path="/health")
     api.add_namespace(auth_routes.api, path=f"{API_PREFIX}/auth") 
-    api.add_namespace(user_queries.api, path=f"{API_PREFIX}/user/queries") 
+    api.add_namespace(user_queries.api, path=f"{API_PREFIX}/user") 
 
 
     return app

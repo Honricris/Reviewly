@@ -442,3 +442,17 @@ def autocomplete_products(search_term: str, limit: int = 3) -> list:
         })
     
     return suggestions
+
+def get_product_count() -> int:
+    """
+    Get the total number of products in the database.
+
+    Returns:
+        int: Total number of products.
+    """
+    try:
+        total_products = Product.query.count()
+        return total_products
+    except Exception as e:
+        print(f"Error in get_product_count: {str(e)}")
+        raise

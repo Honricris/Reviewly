@@ -6,7 +6,7 @@ from ..utils.jwt_utils import generate_access_token
 from flask import current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-api = Namespace('auth', description='Operaciones de autenticación')
+api = Namespace('auth', description='Auth related operations')
 
 login_model = api.model('Login', {
     'email': fields.String(required=True, description='Correo electrónico del usuario'),

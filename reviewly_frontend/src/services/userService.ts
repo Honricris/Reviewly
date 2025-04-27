@@ -4,6 +4,10 @@ export interface UserQuery {
     created_at: string;
   }
   
+export interface UserCount {
+  total_users: number;
+}
+
   const userService = {
     async saveQuery(queryText: string): Promise<void> {
       try {
@@ -50,6 +54,32 @@ export interface UserQuery {
       } catch (error) {
         console.error('Error fetching user queries:', error);
         return [];
+      }
+    },
+
+    async getUserCount(): Promise<number> {
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
+        const apiUrl = `${baseUrl}/user/count`;
+        const token = localStorage.getItem('token');
+  
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error(`Error fetching user count: ${response.status} ${response.statusText}`);
+        }
+  
+        const data: UserCount = await response.json();
+        return data.total_users;
+      } catch (error) {
+        console.error('Error fetching user count:', error);
+        return 0; 
       }
     },
   };

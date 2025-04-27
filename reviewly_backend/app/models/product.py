@@ -1,9 +1,10 @@
-from app import db
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from sqlalchemy.orm import relationship
 from app.models.productdetail import ProductDetail
 from app.models.review import Review
+
+from app import db
 class Product(db.Model):
     __tablename__ = 'products'
 

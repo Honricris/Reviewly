@@ -90,3 +90,13 @@ export const getCategories = async () => {
     throw error;
   }
 };
+
+export const getProductCount = async (): Promise<number> => {
+  try {
+    const response = await apiClient.get('/products/count');
+    return response.data.total_products;
+  } catch (error) {
+    console.error('Error fetching product count:', error);
+    return 0;
+  }
+};

@@ -1,8 +1,11 @@
 from flask_restx import Namespace, Resource, fields
 from flask_jwt_extended import jwt_required
+from app.models.product import Product
 
 from app.services.product_service import (
-    get_all_products, get_product_by_id, create_product, update_product, delete_product, get_all_categories,searchProduct,autocomplete_products
+    get_all_products, get_product_by_id, create_product, update_product, 
+    delete_product, get_all_categories, searchProduct, autocomplete_products, 
+    get_product_count  
 )
 from app.services.review_service import get_reviews_by_product
 from flask import request
@@ -190,3 +193,18 @@ class ProductAutocomplete(Resource):
             "search_term": search_term,
             "suggestions": suggestions
         }, 200
+    
+product_count_model = api.model('ProductCount', {
+    'total_products': fields.Integer(description='Total number of products')
+})
+@api.route('/count')
+class ProductCount(Resource):
+    @jwt_required()
+    @api.marshal_with(product_count_model)
+    def get(self):
+        """Get the total number of products"""
+        try:
+            total_products = get_product_count()
+            return {"total_products": total_products}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
