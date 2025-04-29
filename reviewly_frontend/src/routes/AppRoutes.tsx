@@ -10,6 +10,7 @@ import React from 'react';
 import ProtectedRoute from '../components/ProtectedRoute';
 import AdminRoute from '../components/AdminRoute';
 import AdminDashboard from '../pages/admin/Dashboard';
+import Favourites from '../pages/Favourites';
 
 const AppRoutes = () => {
   return (
@@ -23,6 +24,8 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/products" element={<ProductsMenu />} />
+          <Route path="/favourites" element={<Favourites />} />
+
         </Route>
        
 

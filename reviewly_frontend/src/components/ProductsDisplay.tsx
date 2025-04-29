@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 import { Button, Stack } from '@mui/material';
 import { getProducts } from '../services/productService';
-import userService from '../services/userService';
 
 interface ProductsDisplayProps {
   title: string;
@@ -10,11 +9,12 @@ interface ProductsDisplayProps {
   products: {
     product_id: number;
     title: string;
-    images: string;
+    images: string[];
     store: string;
     price: number;
     average_rating: number;
   }[];
+  favoriteIds?: number[]; 
   onPageChange?: (page: number) => void;
 }
 
@@ -22,25 +22,28 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
   title,
   category,
   products,
+  favoriteIds: initialFavoriteIds,
 }) => {
   const [productList, setProductList] = useState(products);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); 
+  const [favoriteIds, setFavoriteIds] = useState<number[]>(initialFavoriteIds || []);
 
+  
   useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        const ids = await userService.getFavorites();
-        setFavoriteIds(ids);
-      } catch (error) {
-        console.error('Error loading favorites:', error);
-      }
-    };
-
-    loadFavorites();
-  }, []); 
+    if (!initialFavoriteIds) {
+      const loadFavorites = async () => {
+        try {
+          const ids = await userService.getFavorites();
+          setFavoriteIds(ids);
+        } catch (error) {
+          console.error('Error loading favorites:', error);
+        }
+      };
+      loadFavorites();
+    }
+  }, [initialFavoriteIds]);
 
   useEffect(() => {
     const fetchProducts = async (page: number) => {
@@ -56,7 +59,7 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
     if (!category && products.length > 0) {
       setProductList(products);
       setTotalPages(1);
-    } else {
+    } else if (category) {
       fetchProducts(currentPage);
     }
   }, [category, products, currentPage]);

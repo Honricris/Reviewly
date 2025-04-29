@@ -91,6 +91,8 @@ def get_product_by_id(product_id: int) -> dict:
     if not product:
         return None
 
+    large_images = [img.get("large") for img in product.images if isinstance(img, dict) and "large" in img] if product.images else []
+
     return {
         "product_id": product.product_id,
         "title": product.title,
@@ -101,7 +103,7 @@ def get_product_by_id(product_id: int) -> dict:
         "features": product.features,
         "description": product.description,
         "resume_review": product.resume_review,
-        "images": product.images,
+        "images": large_images, 
         "videos": product.videos,
         "store": product.store,
         "categories": product.categories,

@@ -18,6 +18,7 @@ const ProductsMenu: React.FC = () => {
   const [filterLoading, setFilterLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); // Nuevo estado para favoriteIds
 
   const { applianceProducts, musicalProducts, videoGameProducts, clothesProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
@@ -31,19 +32,25 @@ const ProductsMenu: React.FC = () => {
   const [recentQueries, setRecentQueries] = useState<UserQuery[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const [filtersApplied, setFiltersApplied] = useState(false); // New state to track if filters are applied
+  const [filtersApplied, setFiltersApplied] = useState(false);
 
+  // Cargar categorías y favoritos al montar el componente
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategoriesAndFavorites = async () => {
       try {
-        const fetchedCategories = await getCategories();
+        const [fetchedCategories, ids] = await Promise.all([
+          getCategories(),
+          userService.getFavorites()
+        ]);
         setCategories(fetchedCategories);
+        setFavoriteIds(ids);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching categories or favorites:', error);
         setCategories(['Appliances', 'Musical_Instruments', 'Videogames', 'Clothes']);
+        setFavoriteIds([]);
       }
     };
-    fetchCategories();
+    fetchCategoriesAndFavorites();
   }, []);
 
   useEffect(() => {
@@ -498,7 +505,11 @@ const ProductsMenu: React.FC = () => {
                 )}
 
                 {!searchLoading && products.length > 0 && (
-                  <ProductsDisplay title="Search Results" products={products} />
+                  <ProductsDisplay 
+                    title="Search Results" 
+                    products={products} 
+                    favoriteIds={favoriteIds} // Pasamos favoriteIds
+                  />
                 )}
               </div>
             ) : (
@@ -511,6 +522,7 @@ const ProductsMenu: React.FC = () => {
                   <ProductsDisplay 
                     title="Search Results" 
                     products={products} 
+                    favoriteIds={favoriteIds} // Pasamos favoriteIds
                   />
                 ) : (
                   <>
@@ -518,21 +530,25 @@ const ProductsMenu: React.FC = () => {
                       title="Latest in Appliances" 
                       category="Appliances" 
                       products={applianceProducts} 
+                      favoriteIds={favoriteIds} // Pasamos favoriteIds
                     />
                     <ProductsDisplay 
                       title="Latest in Musical Instruments" 
                       category="Musical_Instruments" 
                       products={musicalProducts} 
+                      favoriteIds={favoriteIds} // Pasamos favoriteIds
                     />
                     <ProductsDisplay 
                       title="Latest in Videogames" 
                       category="Videogames" 
                       products={videoGameProducts} 
+                      favoriteIds={favoriteIds} // Pasamos favoriteIds
                     />
                     <ProductsDisplay 
                       title="Latest in Clothes" 
                       category="Clothes" 
                       products={clothesProducts} 
+                      favoriteIds={favoriteIds} // Pasamos favoriteIds
                     />
                   </>
                 )}
