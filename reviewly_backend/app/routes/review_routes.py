@@ -59,7 +59,6 @@ class Reviews(Resource):
         response, status_code = create_review_for_product(data)
         return response, status_code
 
-# Ruta para eliminar una reseña
 @api.route('/<int:review_id>')
 class Review(Resource):
     @jwt_required()

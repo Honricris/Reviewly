@@ -2,9 +2,12 @@ from flask_restx import Namespace, Resource, fields
 from flask import request, jsonify
 from app.services.auth_service import AuthService
 from app.models.user import User
+from app.models.LoginLog import LoginLog
 from ..utils.jwt_utils import generate_access_token
 from flask import current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app import db
+from sqlalchemy.sql import func
 
 api = Namespace('auth', description='Auth related operations')
 
@@ -25,10 +28,19 @@ class Register(Resource):
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
+        user_ip = request.remote_addr
 
         user, error, status_code = AuthService.register_user(email, password)
         if error:
             return {"message": error}, status_code
+
+        login_log = LoginLog(
+            user_id=user.id,
+            ip_address=user_ip,
+            login_at=func.now()
+        )
+        db.session.add(login_log)
+        db.session.commit()
 
         access_token = generate_access_token(user)
 
@@ -39,7 +51,6 @@ class Register(Resource):
             "access_token": access_token
         }, 201
     
-    
 @api.route('/login')
 class Login(Resource):
     @api.expect(login_model)
@@ -47,10 +58,19 @@ class Login(Resource):
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
+        user_ip = request.remote_addr  
 
         user, error, status_code = AuthService.login_user(email, password)
         if error:
             return {"message": error}, status_code
+
+        login_log = LoginLog(
+            user_id=user.id,
+            ip_address=user_ip,
+            login_at=func.now()
+        )
+        db.session.add(login_log)
+        db.session.commit()
 
         access_token = generate_access_token(user)
 
@@ -69,10 +89,19 @@ class GoogleAuth(Resource):
     def post(self):
         data = request.get_json()
         token = data.get('token')
+        user_ip = request.remote_addr  
 
         user, error, status_code = AuthService.google_auth(token)
         if error:
             return {"message": error}, status_code
+
+        login_log = LoginLog(
+            user_id=user.id,
+            ip_address=user_ip,
+            login_at=func.now()
+        )
+        db.session.add(login_log)
+        db.session.commit()
 
         access_token = generate_access_token(user)
 
@@ -83,8 +112,6 @@ class GoogleAuth(Resource):
             "access_token": access_token
         }, 200
     
-
-
 github_auth_model = api.model('GitHubAuth', {
     'code': fields.String(required=True, description='Código de GitHub')
 })
@@ -95,10 +122,19 @@ class GitHubAuth(Resource):
     def post(self):
         data = request.get_json()
         code = data.get('code')
+        user_ip = request.remote_addr  
 
         user, error, status_code = AuthService.github_auth(code)
         if error:
             return {"message": error}, status_code
+
+        login_log = LoginLog(
+            user_id=user.id,
+            ip_address=user_ip,
+            login_at=func.now()
+        )
+        db.session.add(login_log)
+        db.session.commit()
 
         access_token = generate_access_token(user)
 
@@ -109,7 +145,6 @@ class GitHubAuth(Resource):
             "access_token": access_token
         }, 200
     
-
 logout_model = api.model('Logout', {
     'message': fields.String(description='Mensaje de confirmación')
 })
@@ -123,7 +158,6 @@ class Logout(Resource):
         
         from app.services.chat_service_v2 import ChatService
         ChatService.remove_instance(current_user_id)
-    
         
         return {
             "message": "Sesión cerrada exitosamente. Sesión de chat eliminada."
