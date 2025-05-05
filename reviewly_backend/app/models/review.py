@@ -31,7 +31,6 @@ class Review(db.Model):
     parent_asin = Column(String(255)) 
     embedding = Column(Vector, nullable=True)  
 
-    # Relación con la tabla de productos
     product = relationship("Product", back_populates="reviews", lazy=True)
 
     def __repr__(self):

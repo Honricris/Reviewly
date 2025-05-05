@@ -33,7 +33,7 @@ const ProductDetails: React.FC = () => {
       try {
         const productData = await getProductById(id!);
         setProduct(productData);
-        setSelectedImage(productData.images[0].large);
+        setSelectedImage(productData.images[0]);
       } catch (err) {
         setError('Failed to fetch product details.');
       } finally {
@@ -78,34 +78,27 @@ const ProductDetails: React.FC = () => {
     setIsDragging(false);
   };
 
-
-
-  //Metodos para los botones de las flechas de las imágenes
   const handleNextThumbnail = () => {
     setCurrentThumbnailIndex((prevIndex) => {
-      const nextIndex = (prevIndex + 1) % product.images.length; 
-      const nextImage = product.images[nextIndex].large; 
-      setSelectedImage(nextImage); 
-      return nextIndex; 
+      const nextIndex = (prevIndex + 1) % product.images.length;
+      setSelectedImage(product.images[nextIndex]);
+      return nextIndex;
     });
   };
   
-  
   const handlePrevThumbnail = () => {
     setCurrentThumbnailIndex((prevIndex) => {
-      const prevIndexUpdated = (prevIndex - 1 + product.images.length) % product.images.length; 
-      const prevImage = product.images[prevIndexUpdated].large; 
-      setSelectedImage(prevImage); 
-      return prevIndexUpdated; 
+      const prevIndexUpdated = (prevIndex - 1 + product.images.length) % product.images.length;
+      setSelectedImage(product.images[prevIndexUpdated]);
+      return prevIndexUpdated;
     });
   };
   
   const handleImageClick = (imageUrl: string) => {
     setSelectedImage(imageUrl);
+    const index = product.images.indexOf(imageUrl);
+    setCurrentThumbnailIndex(index);
   };
-
-
-
 
   const handlePageChange = async (direction: 'previous' | 'next') => {
     if (direction === 'previous' && currentPage > 1) {
@@ -118,7 +111,6 @@ const ProductDetails: React.FC = () => {
   const SearchHandler = () => {};
 
   const handleChatResponse = (botAnswer: { answer: string; reviews: number[] }) => {
-    
     setHighlightedReviewIds(botAnswer.reviews || []);
   };
 
@@ -144,7 +136,6 @@ const ProductDetails: React.FC = () => {
           const reviewElement = document.getElementById(`review-${reviewId}`);
           if (reviewElement) {
             console.log(`Scrolling to review element with ID: review-${reviewId}`);
-            
             reviewElement.scrollIntoView({
               behavior: 'smooth',
               block: 'center',
@@ -153,7 +144,7 @@ const ProductDetails: React.FC = () => {
           } else {
             console.error(`Review element with ID review-${reviewId} not found.`);
           }
-        }, 500); 
+        }, 500);
       } else {
         page++;
       }
@@ -164,7 +155,6 @@ const ProductDetails: React.FC = () => {
     }
   };
   
-
   if (loading) return <div>Loading product details...</div>;
   if (error) return <div>Error: {error}</div>;
 
@@ -179,21 +169,21 @@ const ProductDetails: React.FC = () => {
             </div>
             <div className="thumbnail-carousel">
               <button className="arrow-button left-arrow" onClick={handlePrevThumbnail}>
-                <ArrowBackIcon /> 
+                <ArrowBackIcon />
               </button>
               <div className="thumbnail-images">
-                {product.images.map((image: any, index: number) => (
+                {product.images.map((image: string, index: number) => (
                   <img
                     key={index}
-                    src={image.large}
+                    src={image}
                     alt={`Thumbnail ${index}`}
-                    onClick={() => handleImageClick(image.large)}
-                    className={`thumbnail ${selectedImage === image.large ? 'active' : ''}`}
+                    onClick={() => handleImageClick(image)}
+                    className={`thumbnail ${selectedImage === image ? 'active' : ''}`}
                   />
                 ))}
               </div>
               <button className="arrow-button right-arrow" onClick={handleNextThumbnail}>
-                <ArrowForwardIcon /> 
+                <ArrowForwardIcon />
               </button>
             </div>
           </div>
@@ -218,7 +208,6 @@ const ProductDetails: React.FC = () => {
                 {product.description.length > 0 && (
                   <p className="product-description">{product.description}</p>
                 )}    
-
                 <hr className="divider"></hr>
                 <div className="product-features">
                   <h2>Features</h2>
@@ -230,9 +219,8 @@ const ProductDetails: React.FC = () => {
                     ))}
                   </ul>
                 </div>
-                                
                 <a href={product.amazon_link} target="_blank" rel="noopener noreferrer" className="amazon-link">
-                <img src="https://www.niftybuttons.com/amazon/amazon-button2.png"/>
+                  <img src="https://www.niftybuttons.com/amazon/amazon-button2.png"/>
                 </a>
               </div>
             </div>

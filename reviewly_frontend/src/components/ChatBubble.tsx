@@ -8,8 +8,6 @@ import MinimizeIcon from '@mui/icons-material/Minimize';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ChatMenuPage from '../components/ChatMenuPage';
 
-
-
 interface BotMessageProps {
   text: string;
   className?: string; 
@@ -28,15 +26,15 @@ interface ChatBubbleProps {
   isOpen: boolean;
   productId?: string;
   onResponse?: (botAnswer: any) => void; 
+  onReportGenerate?: (reportType: string, parameters: any) => void;
   scrollToHighlightedReview?: (reviewId: number) => void;
 }
 
-const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, scrollToHighlightedReview }) => {
+const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, onReportGenerate, scrollToHighlightedReview }) => {
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[]; isStatus?: boolean}[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showMenuPage, setShowMenuPage] = useState(true);
-
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -93,7 +91,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
         if (chunk) {
           try {
             const parsedChunk = JSON.parse(chunk);
-            if (parsedChunk.type === 'additional_data') {
+            if (parsedChunk.type === 'additional_data' && parsedChunk.data?.report_type) {
+              const { report_type, parameters } = parsedChunk.data;
+              if (onReportGenerate) {
+                onReportGenerate(report_type, parameters);
+              }
               botMessage.reviewIds = parsedChunk.data.review_ids || [];
               botMessage.products = parsedChunk.data.products || [];
 
@@ -103,8 +105,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
                 onResponse({ reviews: botMessage.reviewIds });
               }
 
-            }else if (parsedChunk.type === 'status') {
-
+            } else if (parsedChunk.type === 'status') {
               const statusMessage = {
                 sender: 'bot' as const,
                 text: parsedChunk.message,
@@ -118,7 +119,6 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
               setMessages((prev) => prev.filter(msg => !msg.isStatus));
               botMessage.text += chunk;
               setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
-
             }
           } catch (error) {
             botMessage.text += chunk;
@@ -144,16 +144,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
     }
   };
   
-
   return (
     <div className={`chat-container ${isOpen ? 'open' : ''}`}>
       {isOpen && (
         <>
           {showMenuPage ? (
             <ChatMenuPage 
-              onCloseClick={onClick }
+              onCloseClick={onClick}
               onChatClick={() => setShowMenuPage(false)}
-            
             />
           ) : (
             <>

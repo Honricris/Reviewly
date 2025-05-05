@@ -20,7 +20,7 @@ dist/
 
 
 .env 
-
+*.mmdb
 
 
 # TypeScript config files

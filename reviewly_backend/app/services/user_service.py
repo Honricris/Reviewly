@@ -12,16 +12,13 @@ class UserService:
     def get_users(
         limit=5,
         email=None,
-        email_starts_with=None,
+        email_contains=None,
         role=None,
         github_id=None,
         has_github_id=None,
         order_by='created_at',
         descending=True
     ):
-        """
-        Get users with optional filtering parameters.
-        """
         app = create_app()
         with app.app_context():
             query = User.query
@@ -29,8 +26,8 @@ class UserService:
             if email:
                 query = query.filter_by(email=email.lower())
                 
-            if email_starts_with:
-                query = query.filter(User.email.ilike(f"{email_starts_with.lower()}%"))
+            if email_contains:
+                query = query.filter(User.email.ilike(f"%{email_contains.lower()}%"))
                 
             if role:
                 if role.lower() not in UserService.VALID_ROLES:
@@ -53,61 +50,82 @@ class UserService:
                 query = query.order_by(order_column)
                 
             return query.limit(limit).all()
-    
+
     @staticmethod
     def get_user_by_id(user_id):
-        """Get a single user by ID."""
         app = create_app()
         with app.app_context():
             return User.query.get(user_id)
-    
+
     @staticmethod
     def get_user_by_email(email):
-        """Get a single user by email."""
         app = create_app()
         with app.app_context():
             return User.query.filter_by(email=email.lower()).first()
-    
+
     @staticmethod
-    def set_user_role(user_id, new_role):
-        """
-        Change a user's role with explicit session management.
-        
-        Args:
-            user_id (int): The ID of the user to modify
-            new_role (str): The new role to assign (must be 'user' or 'admin')
-            
-        Returns:
-            User: The updated user object, or None if user not found
-            
-        Raises:
-            ValueError: If new_role is not 'user' or 'admin'
-        """
-        if new_role.lower() not in UserService.VALID_ROLES:
-            raise ValueError(f"Invalid role. Must be one of: {', '.join(UserService.VALID_ROLES)}")
-            
+    def create_user(email, role, github_id=None):
+        """Create a new user"""
+        app = create_app()
+        with app.app_context():
+            session = Session(db.engine)
+            try:
+                if role.lower() not in UserService.VALID_ROLES:
+                    return None, f"Invalid role. Must be one of: {', '.join(UserService.VALID_ROLES)}"
+                
+                if UserService.get_user_by_email(email):
+                    return None, "Email already exists"
+                
+                user = User(
+                    email=email.lower(),
+                    role=role.lower(),
+                    github_id=github_id
+                )
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+                return user, None
+            except SQLAlchemyError as e:
+                session.rollback()
+                return None, str(e)
+            finally:
+                session.close()
+
+    @staticmethod
+    def update_user(user_id, email=None, role=None, github_id=None):
+        """Update an existing user"""
         app = create_app()
         with app.app_context():
             session = Session(db.engine)
             try:
                 user = session.get(User, user_id)
                 if not user:
-                    session.close()
-                    return None
+                    return None, "User not found"
                 
-                user.role = new_role.lower()
+                if email and email.lower() != user.email:
+                    if UserService.get_user_by_email(email):
+                        return None, "Email already exists"
+                    user.email = email.lower()
+                
+                if role:
+                    if role.lower() not in UserService.VALID_ROLES:
+                        return None, f"Invalid role. Must be one of: {', '.join(UserService.VALID_ROLES)}"
+                    user.role = role.lower()
+                
+                if github_id is not None:
+                    user.github_id = github_id
+                
                 session.commit()
                 session.refresh(user)
-                return user
-            except Exception as e:
+                return user, None
+            except SQLAlchemyError as e:
                 session.rollback()
-                raise e
+                return None, str(e)
             finally:
                 session.close()
 
     @staticmethod
     def get_user_favorite_ids(user_id):
-        """Get list of favorite product IDs for a user."""
         try:
             user = User.query.get(user_id)
             if not user:
@@ -119,7 +137,6 @@ class UserService:
 
     @staticmethod
     def get_user_favorites(user_id):
-        """Get list of user's favorite products (mantenido por si se necesita en otro lugar)."""
         try:
             user = User.query.get(user_id)
             if not user:
@@ -167,3 +184,23 @@ class UserService:
         except SQLAlchemyError as e:
             db.session.rollback()
             return False, str(e)
+
+    @staticmethod
+    def delete_user(user_id):
+        app = create_app()
+        with app.app_context():
+            session = Session(db.engine)
+            try:
+                user = session.get(User, user_id)
+                if not user:
+                    session.close()
+                    return False, "User not found"
+                
+                session.delete(user)
+                session.commit()
+                return True, "User deleted successfully"
+            except SQLAlchemyError as e:
+                session.rollback()
+                return False, str(e)
+            finally:
+                session.close()

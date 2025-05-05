@@ -1,18 +1,15 @@
 import json
 from app import create_app
 from app.services.user_service import UserService
-
+import time
 class AdminHandlers:
     VALID_ROLES = {"user", "admin"}
 
     @staticmethod
     def handle_get_users(args):
-        """
-        Handle admin requests to get users with optional filters.
-        """
         limit = args.get("limit", 5)
         email = args.get("email")
-        email_starts_with = args.get("email_starts_with")
+        email_contains = args.get("email_contains")
         role = args.get("role")
         github_id = args.get("github_id")
         has_github_id = args.get("has_github_id")
@@ -23,7 +20,7 @@ class AdminHandlers:
                 users = UserService.get_users(
                     limit=limit,
                     email=email,
-                    email_starts_with=email_starts_with,
+                    email_contains=email_contains,
                     role=role,
                     github_id=github_id if github_id is not None else None,
                     has_github_id=has_github_id if has_github_id is not None else None
@@ -56,9 +53,6 @@ class AdminHandlers:
     
     @staticmethod
     def handle_get_user_by_id(args):
-        """
-        Handle admin request to get a single user by ID.
-        """
         user_id = args.get("user_id")
         if not user_id:
             return json.dumps({"error": "user_id is required"})
@@ -96,9 +90,6 @@ class AdminHandlers:
     
     @staticmethod
     def handle_set_user_role(args):
-        """
-        Handle admin request to change a user's role.
-        """
         user_id = args.get("user_id")
         new_role = args.get("new_role")
         
@@ -140,3 +131,83 @@ class AdminHandlers:
                     "user": user_data
                 }
             })
+
+    @staticmethod
+    def handle_delete_user(args):
+        user_id = args.get("user_id")
+        
+        if not user_id:
+            return json.dumps({"error": "user_id is required"})
+            
+        app = create_app()
+        with app.app_context():
+            success, message = UserService.delete_user(user_id)
+            
+            if not success:
+                return json.dumps({
+                    "response_text": message,
+                    "additional_data": {}
+                })
+            
+            response_text = f"User with ID {user_id} has been successfully deleted"
+            
+            return json.dumps({
+                "response_text": response_text,
+                "additional_data": {}
+            })
+
+    @staticmethod
+    def handle_generate_user_activity_report(args):
+        start_date = args.get("start_date")
+        end_date = args.get("end_date")
+        role = args.get("role")
+        time.sleep(1)
+
+        response_text = f"Generating User Activity Report with parameters: Start Date: {start_date }, End Date: {end_date}, Role: {role or 'All'}"
+        
+        additional_data = {
+            "report_type": "user_activity",
+            "parameters": {
+                "start_date": start_date,
+                "end_date": end_date,
+                "role": role
+            }
+        }
+        
+        return json.dumps({
+            "response_text": response_text,
+            "additional_data": additional_data
+        })
+
+    @staticmethod
+    def handle_generate_product_popularity_report(args):
+        category = args.get("category")
+        min_price = args.get("min_price")
+        max_price = args.get("max_price")
+        min_rating = args.get("min_rating")
+        min_favorites = args.get("min_favorites")
+        sort_by = args.get("sort_by", "title")
+        sort_order = args.get("sort_order", "asc")
+        
+        time.sleep(1)
+
+        response_text = f"Generating Product Popularity Report with parameters: Category: {category or 'All'}, Min Price: {min_price or 'Any'}, Max Price: {max_price or 'Any'}, Min Rating: {min_rating or 'Any'}, Min Favorites: {min_favorites or 'Any'}, Sort By: {sort_by or 'Title'}"
+        
+        additional_data = {
+            "report_type": "product_popularity",
+            "parameters": {
+                "category": category,
+                "min_price": min_price,
+                "max_price": max_price,
+                "min_rating": min_rating,
+                "min_favorites": min_favorites,
+                "sort_by": sort_by,
+                "sort_order": sort_order
+            }
+        }
+        
+        
+        return json.dumps({
+            "response_text": response_text,
+            "additional_data": additional_data
+        })

@@ -18,8 +18,7 @@ const ProductsMenu: React.FC = () => {
   const [filterLoading, setFilterLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); // Nuevo estado para favoriteIds
-
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); 
   const { applianceProducts, musicalProducts, videoGameProducts, clothesProducts, loading, error } = useProductsMenu();
   const [products, setProducts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -34,7 +33,6 @@ const ProductsMenu: React.FC = () => {
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const [filtersApplied, setFiltersApplied] = useState(false);
 
-  // Cargar categorías y favoritos al montar el componente
   useEffect(() => {
     const fetchCategoriesAndFavorites = async () => {
       try {
@@ -203,9 +201,14 @@ const ProductsMenu: React.FC = () => {
         setSuggestions([]);
         setRecentQueries([]);
         setGridMinHeight();
+        
+        const startTime = performance.now();
         const searchResults = await searchProducts(searchQuery.trim());
+        const endTime = performance.now();
+        const executionTime = (endTime - startTime) / 1000; 
+        
         setProducts(searchResults.top_products || []);
-        await userService.saveQuery(searchQuery.trim());
+        await userService.saveQuery(searchQuery.trim(), executionTime);
       } catch (error) {
         console.error('Error in search:', error);
         setProducts([]);
@@ -508,7 +511,7 @@ const ProductsMenu: React.FC = () => {
                   <ProductsDisplay 
                     title="Search Results" 
                     products={products} 
-                    favoriteIds={favoriteIds} // Pasamos favoriteIds
+                    favoriteIds={favoriteIds} 
                   />
                 )}
               </div>
@@ -522,7 +525,7 @@ const ProductsMenu: React.FC = () => {
                   <ProductsDisplay 
                     title="Search Results" 
                     products={products} 
-                    favoriteIds={favoriteIds} // Pasamos favoriteIds
+                    favoriteIds={favoriteIds} 
                   />
                 ) : (
                   <>
@@ -530,25 +533,25 @@ const ProductsMenu: React.FC = () => {
                       title="Latest in Appliances" 
                       category="Appliances" 
                       products={applianceProducts} 
-                      favoriteIds={favoriteIds} // Pasamos favoriteIds
+                      favoriteIds={favoriteIds} 
                     />
                     <ProductsDisplay 
                       title="Latest in Musical Instruments" 
                       category="Musical_Instruments" 
                       products={musicalProducts} 
-                      favoriteIds={favoriteIds} // Pasamos favoriteIds
+                      favoriteIds={favoriteIds} 
                     />
                     <ProductsDisplay 
                       title="Latest in Videogames" 
                       category="Videogames" 
                       products={videoGameProducts} 
-                      favoriteIds={favoriteIds} // Pasamos favoriteIds
+                      favoriteIds={favoriteIds} 
                     />
                     <ProductsDisplay 
                       title="Latest in Clothes" 
                       category="Clothes" 
                       products={clothesProducts} 
-                      favoriteIds={favoriteIds} // Pasamos favoriteIds
+                      favoriteIds={favoriteIds}
                     />
                   </>
                 )}

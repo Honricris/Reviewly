@@ -5,7 +5,7 @@ from app.models.product import Product
 from app.services.product_service import (
     get_all_products, get_product_by_id, create_product, update_product, 
     delete_product, get_all_categories, searchProduct, autocomplete_products, 
-    get_product_count  
+    get_product_count , get_product_favorite_count 
 )
 from app.services.review_service import get_reviews_by_product
 from flask import request
@@ -46,34 +46,34 @@ autocomplete_model = api.model('Autocomplete', {
 
 @api.route('/')
 class ProductList(Resource):
-    @api.param('name', 'Search term for product title', type=str) 
-    @api.param('category', 'Category filter for products', type=str)
-    @api.param('price_min', 'Minimum price filter for products', type=float)
-    @api.param('price_max', 'Maximum price filter for products', type=float)
-    @api.param('store', 'Store filter for products (case insensitive)', type=str)
-    @api.param('limit', 'Number of products to return', type=int, default=10)
-    @api.param('page', 'Page number for pagination', type=int, default=1)
     @jwt_required()
     def get(self):
-        name = request.args.get('name')
+        """List products with filters"""
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 10, type=int)
         category = request.args.get('category')
-        price_min = request.args.get('price_min', type=float)  
-        price_max = request.args.get('price_max', type=float) 
+        name = request.args.get('name')
+        price_min = request.args.get('price_min', type=float)
+        price_max = request.args.get('price_max', type=float)
         store = request.args.get('store')
-        limit = request.args.get('limit', type=int)
-        page = request.args.get('page', type=int)
+        min_rating = request.args.get('min_rating', type=float)
+        min_favorites = request.args.get('min_favorites', type=int)
+        include_favorites = request.args.get('include_favorites', 'false').lower() == 'true'
 
-
-        products = get_all_products(category=category, price_min=price_min, price_max=price_max, name=name,store=store, limit=limit, page=page)
-        return products, 200
-
-    @api.expect(product_model)
-    @jwt_required()
-    def post(self):
-        data = api.payload
-        product = create_product(data)
-        return product, 201
-    
+        try:
+            response = get_all_products(
+                category=category,
+                name=name,
+                price_min=price_min,
+                price_max=price_max,
+                store=store,
+                page=page,
+                limit=limit,
+                include_favorites=include_favorites
+            )
+            return response, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
 
 @api.route('/<int:id>')
 class Product(Resource):
@@ -142,6 +142,21 @@ class ProductCategories(Resource):
         categories = get_all_categories() 
         return {"categories": categories}, 200
     
+favorite_count_model = api.model('FavoriteCount', {
+    'favoriteCount': fields.Integer(description='Number of users who favorited the product')
+})
+@api.route('/<int:product_id>/favorite-count')
+class ProductFavoriteCount(Resource):
+    @jwt_required()
+    @api.marshal_with(favorite_count_model)
+    def get(self, product_id):
+        """Get the number of users who favorited a product"""
+        try:
+            count = get_product_favorite_count(product_id)
+            return {'favoriteCount': count}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+        
 @api.route('/<int:id>/reviews')
 class ProductReviews(Resource):
     @api.param('page', 'Page number for review pagination', type=int, default=1)
@@ -208,3 +223,5 @@ class ProductCount(Resource):
             return {"total_products": total_products}, 200
         except Exception as e:
             return {"error": str(e)}, 500
+        
+

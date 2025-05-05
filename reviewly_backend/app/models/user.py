@@ -14,7 +14,8 @@ class User(db.Model):
     role = Column(String(50), nullable=False, default="user")
     favorites = relationship('Product', secondary='user_favorites', backref='favorited_by')
     login_logs = relationship('LoginLog', backref='user', cascade='all, delete-orphan')  
-
+    queries = relationship('UserQuery', back_populates='user', cascade='all, delete')  
+    
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email})>"
 

@@ -7,6 +7,7 @@ from app.services.user_service import UserService
 from app import create_app
 from app.services.customer_function_handlers import CustomerHandlers
 from app.services.admin_function_handlers import AdminHandlers
+from datetime import datetime
 
 load_dotenv()
 class ChatService:
@@ -31,27 +32,26 @@ class ChatService:
             "Content-Type": "application/json"
         }
         
-        # Determine if user is admin
         app = create_app()
         with app.app_context():
             user = UserService.get_user_by_id(user_id)
             self.is_admin = user.role.lower() == "admin" if user else False
 
-        # Set base system message based on role
+        current_date = datetime.now().strftime("%B %d, %Y")
+        
         if self.is_admin:
             self.messages = [{
                 "role": "system",
-                "content": "You are an admin assistant for an online store. You have access to both customer-facing features and administrative functions. You can manage user information, answer questions about products, provide recommendations, and assist with store operations. Never show images in your responses."
+                "content": f"You are an admin assistant for an online store. Today's date is {current_date}. You can manage user information, generate reports, answer questions about products, provide recommendations, and assist with store operations. Never show images in your responses."
             }]
         else:
             self.messages = [{
                 "role": "system",
-                "content": "You are an assistant for an online store. You can answer questions about product information, provide recommendations, and help customers with their purchases. You cannot make direct purchases. Never show images in your responses."
+                "content": f"You are an assistant for an online store. Today's date is {current_date}. You can answer questions about product information, provide recommendations, and help customers with their purchases. You cannot make direct purchases. Never show images in your responses."
             }]
             
         self.product_id = None 
 
-        # Add categories info
         with app.app_context():
             categories = get_all_categories()
         if categories:
@@ -61,7 +61,6 @@ class ChatService:
                 "content": f"Available product categories: {categories_str}"
             })
 
-        # Define tool functions based on user role
         self.tool_functions = {
             "search_product": CustomerHandlers.handle_search_product,
             "get_reviews_by_embedding": CustomerHandlers.handle_get_reviews_by_embedding
@@ -70,8 +69,10 @@ class ChatService:
             self.tool_functions.update({
                 "get_users": AdminHandlers.handle_get_users,
                 "get_user_by_id": AdminHandlers.handle_get_user_by_id,
-                "set_user_role": AdminHandlers.handle_set_user_role
-
+                "set_user_role": AdminHandlers.handle_set_user_role,
+                "delete_user": AdminHandlers.handle_delete_user,
+                "generate_user_activity_report": AdminHandlers.handle_generate_user_activity_report,
+                "generate_product_popularity_report": AdminHandlers.handle_generate_product_popularity_report
             })
 
     def ask_question(self, prompt=None, product_id=None, model="openai/gpt-4o-mini"):
@@ -90,7 +91,6 @@ class ChatService:
                     "content": f"Currently viewing product: {product_str}"
                 })
 
-        # Base tools available to all users
         tools = [
             {
                 "type": "function",
@@ -126,7 +126,6 @@ class ChatService:
             }
         ]
 
-        # Add admin-specific tools
         if self.is_admin:
             tools.extend([
                 {
@@ -139,7 +138,7 @@ class ChatService:
                             "properties": {
                                 "limit": {"type": "integer", "description": "Maximum number of users to return", "default": 5},
                                 "email": {"type": "string", "description": "Exact email match (optional)"},
-                                "email_starts_with": {"type": "string", "description": "Filter emails starting with this string (optional)"},
+                                "email_contains": {"type": "string", "description": "Filter emails containing this string (optional)"},
                                 "role": {"type": "string", "description": "Filter by role (must be 'user' or 'admin')", "enum": ["user", "admin"]},
                                 "github_id": {"type": "integer", "description": "Exact GitHub ID match (optional)"},
                                 "has_github_id": {"type": "boolean", "description": "Filter users with/without GitHub ID (optional)"}
@@ -176,10 +175,59 @@ class ChatService:
                             "required": ["user_id", "new_role"]
                         }
                     }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "delete_user",
+                        "description": "Delete a user from the system (admin only)",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "user_id": {"type": "integer", "description": "The ID of the user to delete"}
+                            },
+                            "required": ["user_id"]
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "generate_user_activity_report",
+                        "description": "Generate a user activity report with optional date range and role filters (admin only)",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "start_date": {"type": "string", "description": "Start date for login activity (YYYY-MM-DD), optional"},
+                                "end_date": {"type": "string", "description": "End date for login activity (YYYY-MM-DD), optional"},
+                                "role": {"type": "string", "description": "Filter by user role (All, user, or admin), optional", "enum": ["All", "user", "admin"]}
+                            },
+                            "required": []
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "generate_product_popularity_report",
+                        "description": "Generate a product popularity report with optional filters (admin only)",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "category": {"type": "string", "description": "Filter by product category, optional"},
+                                "min_price": {"type": "number", "description": "Minimum price filter, optional"},
+                                "max_price": {"type": "number", "description": "Maximum price filter, optional"},
+                                "min_rating": {"type": "number", "description": "Minimum average rating filter (0-5), optional"},
+                                "min_favorites": {"type": "number", "description": "Minimum number of favorites filter, optional"},
+                                "sort_by": {"type": "string", "description": "Sort results by field", "enum": ["title", "price", "favorites", "rating", "reviews"]},
+                                "sort_order": {"type": "string", "description": "Sort order (ascending or descending). Use it in combination with the sort_by property to sort by ascending or descending order", "enum": ["asc", "desc"], "default": "asc"}
+                            },
+                            "required": []
+                        }
+                    }
                 }
             ])
 
-        # Adjust get_reviews_by_embedding parameters based on product_id
         if not product_id:
             tools[1]["function"]["parameters"]["properties"]["product_name_or_description"] = {
                 "type": "string",
@@ -250,11 +298,15 @@ class ChatService:
                                             "get_reviews_by_embedding": "Searching information in the reviews",
                                             "get_users": "Retrieving user list",
                                             "get_user_by_id": "Retrieving user information",
-                                            "set_user_role": "Updating user role"
+                                            "set_user_role": "Updating user role",
+                                            "delete_user": "Deleting user",
+                                            "generate_user_activity_report": "Generating user activity report",
+                                            "generate_product_popularity_report": "Generating product popularity report"
                                         }
+                                        status_msg = status_messages.get(function_name, f"Executing function {function_name}")
                                         yield json.dumps({
                                             "type": "status",
-                                            "message": status_messages.get(function_name, f"Executing function {function_name}")
+                                            "message": status_msg
                                         })
 
                                         if function_name == "get_reviews_by_embedding" and self.product_id:
@@ -263,7 +315,7 @@ class ChatService:
                                                 args['product_id'] = self.product_id
                                                 list(tool_calls_buffer.values())[0]['arguments'] = json.dumps(args)
                                             except json.JSONDecodeError:
-                                                print("Error al decodificar argumentos existentes")
+                                                pass
 
                                         responses = self._handle_tool_calls(list(tool_calls_buffer.values()))
                                         for response in responses:
@@ -285,9 +337,8 @@ class ChatService:
                                         yield data_obj["choices"][0]["delta"]["content"]
 
                                 except json.JSONDecodeError:
-                                    print("Error al decodificar JSON en el streaming")
+                                    pass
                         except Exception as e:
-                            print("Error en el procesamiento del streaming:", e)
                             break
         except requests.exceptions.RequestException as e:
             yield json.dumps({"error": "The service is currently unavailable. Please try again later."})
@@ -315,12 +366,14 @@ class ChatService:
                     })
                     response = self.tool_functions[function_name](args)
                     response_data = json.loads(response)
-                    responses.append({
+                    
+                    response_dict = {
                         "id": tool_call["id"],
                         "name": function_name,
                         "content": response_data["response_text"],
                         "additional_data": response_data.get("additional_data", {})
-                    })
+                    }
+                    responses.append(response_dict)
                 except json.JSONDecodeError:
-                    print(f"Error al decodificar argumentos para {function_name}: {tool_call['arguments']}")
+                    pass
         return responses

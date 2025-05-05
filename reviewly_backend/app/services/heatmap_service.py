@@ -2,41 +2,45 @@ from app.models.LoginLog import LoginLog
 from app import db
 from datetime import datetime
 from collections import Counter
-import requests
-from sqlalchemy.sql import func
+import maxminddb
 
 class HeatmapService:
+    GEO_DB_PATH = 'app/data/GeoLite2-City.mmdb' 
+    try:
+        GEO_READER = maxminddb.open_database(GEO_DB_PATH)
+    except Exception as e:
+        GEO_READER = None
+
     @staticmethod
     def geolocate_ip(ip_address):
+        if not HeatmapService.GEO_READER:
+            return None
+
         try:
-            print(f"Geolocalizando IP: {ip_address}")
-            response = requests.get(f"http://ip-api.com/json/{ip_address}")
-            data = response.json()
-            print(f"Respuesta de ip-api para {ip_address}: {data}")
-            if data['status'] == 'success':
+            data = HeatmapService.GEO_READER.get(ip_address)
+            if data and 'location' in data and 'latitude' in data['location'] and 'longitude' in data['location']:
                 return {
-                    'latitude': data['lat'],
-                    'longitude': data['lon']
+                    'latitude': data['location']['latitude'],
+                    'longitude': data['location']['longitude']
                 }
-            print(f"Geolocalización fallida para {ip_address}: {data.get('message', 'No success')}")
             return None
         except Exception as e:
-            print(f"Error al geolocalizar {ip_address}: {str(e)}")
             return None
 
     @staticmethod
     def get_heatmap_data(start_date=None, end_date=None):
-        print(f"Iniciando get_heatmap_data - start_date: {start_date}, end_date: {end_date}")
         
-        query = db.session.query(LoginLog).filter(LoginLog.ip_address.isnot(None))
+        query = db.session.query(LoginLog).filter(
+            LoginLog.ip_address.isnot(None),
+            LoginLog.ip_address.notin_(['127.0.0.1', '::1'])
+        )
         if start_date:
             query = query.filter(LoginLog.login_at >= start_date)
         if end_date:
             query = query.filter(LoginLog.login_at <= end_date)
 
         logs = query.all()
-        print(f"Total de logs encontrados: {len(logs)}")
-        print(f"IPs de los logs: {[log.ip_address for log in logs]}")
+        print(f"Se encontraron {len(logs)} registros de login")
 
         geo_counts = Counter()
         for log in logs:
@@ -45,13 +49,13 @@ class HeatmapService:
                 lat = round(geo_data['latitude'], 2)
                 lng = round(geo_data['longitude'], 2)
                 geo_counts[(lat, lng)] += 1
-                print(f"Coordenadas para {log.ip_address}: ({lat}, {lng})")
+            else:
+                print(f"No se pudieron obtener coordenadas para {log.ip_address}")
 
         heat_data = [
             {'lat': lat, 'lng': lng, 'weight': count}
             for (lat, lng), count in geo_counts.items()
         ]
-        print(f"Datos de heatmap generados: {len(heat_data)} puntos")
-        print(f"Heatmap data: {heat_data}")
+
 
         return heat_data

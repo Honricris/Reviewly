@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             email: decoded.email,
             role: decoded.role
           });
-
+          
         return decoded
     };
 

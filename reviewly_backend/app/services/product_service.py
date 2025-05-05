@@ -6,15 +6,50 @@ from app.utils.model_loader import get_model
 from app.models.productdetail import ProductDetail
 from app.models.productfeature import ProductFeature
 from app.models.review import Review 
+from sqlalchemy.sql import func
+
 model = get_model()
 
-def get_all_products(category=None, price_min=None, price_max=None, name=None,store=None, page=1, limit=43):
+def get_product_favorite_count(product_id: int) -> int:
+    """
+    Get the number of users who have favorited a specific product.
+
+    Args:
+        product_id (int): ID of the product.
+
+    Returns:
+        int: Number of users who favorited the product.
+    """
+    try:
+        count = db.session.query(func.count()).select_from(db.Table('user_favorites'))\
+                         .filter_by(product_id=product_id).scalar()
+        return count or 0
+    except Exception as e:
+        print(f"Error fetching favorite count for product {product_id}: {e}")
+        return 0
+
+def get_all_products(category=None, price_min=None, price_max=None, name=None, store=None, page=1, limit=43, include_favorites=False):
+    """
+    Get all products with optional filtering and favorite counts.
+
+    Args:
+        category (str, optional): Filter by main category.
+        price_min (float, optional): Minimum price filter.
+        price_max (float, optional): Maximum price filter.
+        name (str, optional): Filter by product title.
+        store (str, optional): Filter by store name.
+        page (int): Page number for pagination.
+        limit (int): Number of products per page.
+        include_favorites (bool): Whether to include favorite count for each product.
+
+    Returns:
+        dict: Dictionary containing products, total products, total pages, and current page.
+    """
     if page is None:
         page = 1
     print(f"Inicio del método: category={category}, page={page}, limit={limit}")
 
     query = Product.query
-
 
     if name:
         query = query.filter(Product.title.ilike(f'%{name}%')) 
@@ -22,17 +57,14 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None,st
     if category:
         query = query.filter(Product.main_category == category)
         
-
     if store:
-            query = query.filter(Product.store.ilike(f'%{store}%'))
+        query = query.filter(Product.store.ilike(f'%{store}%'))
             
     if price_min is not None:
         query = query.filter(Product.price >= price_min)
 
-
     if price_max is not None:
         query = query.filter(Product.price <= price_max)
-
 
     total_products = query.count()
     total_pages = (total_products + limit - 1) // limit  
@@ -51,7 +83,7 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None,st
         try:
             large_images = [img.get("large") for img in p.images if isinstance(img, dict) and "large" in img] if p.images else []
 
-            result.append({
+            product_data = {
                 "product_id": p.product_id,
                 "title": p.title,
                 "main_category": p.main_category,
@@ -60,10 +92,15 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None,st
                 "price": p.price,
                 "images": large_images, 
                 "store": p.store
-            })
+            }
+
+            # Include favorite count if requested
+            if include_favorites:
+                product_data["favorite_count"] = get_product_favorite_count(p.product_id)
+
+            result.append(product_data)
         except Exception as e:
             print(f"Error procesando producto {i}: {e}")
-
 
     response = {
         "products": result,
@@ -73,8 +110,6 @@ def get_all_products(category=None, price_min=None, price_max=None, name=None,st
     }
     print("Respuesta generada correctamente.")
     return response
-
-
 
 def get_product_by_id(product_id: int) -> dict:
     """
@@ -160,7 +195,7 @@ def searchProduct(query: str, top_n=5, category: str = None, min_price: float = 
         ),
         product_features AS (
             SELECT pf.product_id, 
-                   JSON_AGG(pf.feature) AS features  -- Agrupa las características en un JSON
+                   JSON_AGG(pf.feature) AS features
             FROM product_features pf
             WHERE pf.product_id IN (SELECT product_id FROM title_matches)
             GROUP BY pf.product_id
@@ -170,7 +205,7 @@ def searchProduct(query: str, top_n=5, category: str = None, min_price: float = 
                COALESCE(ds.detail_score, 0) AS detail_score,
                COALESCE(fs.feature_score, 0) AS feature_score,
                (tm.title_score * 0.7 + COALESCE(ds.detail_score, 0) * 0.2 + COALESCE(fs.feature_score, 0) * 0.1) AS total_score,
-               pf.features  -- Incluir las características
+               pf.features
         FROM title_matches tm
         LEFT JOIN detail_scores ds ON tm.product_id = ds.product_id
         LEFT JOIN feature_scores fs ON tm.product_id = fs.product_id
@@ -220,7 +255,6 @@ def searchProduct(query: str, top_n=5, category: str = None, min_price: float = 
         "top_products": result
     }
 
-
 def create_product(data: dict) -> dict:
     """
     Crea uno o varios productos en la base de datos junto con sus detalles y características.
@@ -268,7 +302,6 @@ def create_product(data: dict) -> dict:
         db.session.add(product)
         db.session.flush()  
 
-        # Añadir ProductDetails
         if product.details:
             for key, value in product.details.items():
                 detail_text = f"{key}: {value}"
@@ -289,7 +322,6 @@ def create_product(data: dict) -> dict:
                     print(f"Detalles del error: {embed_error}")
                     continue  
 
-        # Añadir ProductFeatures
         if product.features:
             for feature in product.features:
                 try:
@@ -330,7 +362,6 @@ def create_product(data: dict) -> dict:
         ]
     }
 
-
 def update_product(product_id: int, data: dict) -> dict:
     """
     Actualiza un producto existente en la base de datos.
@@ -342,20 +373,17 @@ def update_product(product_id: int, data: dict) -> dict:
     Returns:
         dict: Información del producto actualizado o `None` si no se encuentra.
     """
-    # Buscar el producto en la base de datos por su ID
     product = Product.query.get(product_id)
 
     if not product:
         return None
 
-    # Actualizar los campos del producto
     for key, value in data.items():
         if hasattr(product, key):
             setattr(product, key, value)
 
     db.session.commit()
 
-    # Retornar el producto actualizado en formato serializable
     return {
         "product_id": product.product_id,
         "title": product.title,
@@ -386,7 +414,6 @@ def delete_product(product_id: int) -> bool:
     Returns:
         bool: `True` si el producto y sus datos asociados fueron eliminados, `False` si no se encontró el producto.
     """
-    # Buscar el producto en la base de datos por su ID
     product = Product.query.get(product_id)
 
     if not product:
@@ -410,11 +437,9 @@ def delete_product(product_id: int) -> bool:
         print(f"Error al eliminar el producto y sus datos asociados: {e}")
         return False
 
-
 def get_all_categories():
     categories = Product.query.with_entities(Product.main_category).distinct().all()
     return [category[0] for category in categories]
-
 
 def autocomplete_products(search_term: str, limit: int = 3) -> list:
     """

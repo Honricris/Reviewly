@@ -35,18 +35,15 @@
   border-bottom: 1px solid #ccc;
 }
 
-
 .header-left {
   position: absolute;
   left: 15px;
   top: 20px;
 }
 
-
 .header-left:hover, .close-button:hover {
   transform: scale(1.1);
 }
-
 
 .header-center {
   display: flex;
@@ -128,20 +125,34 @@
   margin-top: 5px;
 }
 
-
 .bot-message {
   background-color: #f1f1f1;
   color: black;
   align-self: flex-start;
   font-size: 15px;
   border-radius: 12px 12px 12px 0;
-  
-}
-.bot-message-content p {
-  margin-top: 0;
-  margin-bottom: 0;
+  max-width: 95%;
+  overflow-wrap: break-word; 
 }
 
+/* Estilos específicos para listas dentro de bot-message */
+.bot-message ol,
+.bot-message ul {
+  margin-left: 20px; 
+  padding-left: 7px; 
+  margin-top: 5px; 
+  margin-bottom: 5px;
+}
+
+.bot-message li {
+  margin-bottom: 5px; 
+}
+
+.bot-message-content {
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 12px;
+}
 
 /* Estilos del área de entrada de mensajes */
 .chat-input-container {
@@ -256,6 +267,7 @@ button:hover:not(:disabled) {
   background-color: #dae0e5;
   border-color: #6c757d;
 }
+
 /* Status message */
 .status-message {
   font-style: italic;
@@ -292,13 +304,13 @@ button:hover:not(:disabled) {
 }
 
 .close-button .checkbox-wrapper label {
-  --size: 30px; /* Tamaño más pequeño para el botón de cierre */
+  --size: 30px; 
   position: relative;
   display: block;
   width: var(--size);
   height: var(--size);
   margin: 0 auto;
-  background-color: #e1236a; /* Color rojo para el botón de cierre */
+  background-color: #e1236a;
   border-radius: 50%;
   cursor: pointer;
   transition: 0.2s ease transform, 0.2s ease background-color,
@@ -349,7 +361,7 @@ button:hover:not(:disabled) {
   width: calc(var(--size) * 0.6);
   height: calc(var(--size) * 0.6);
   transform: translate(-50%, -50%);
-  opacity: 1; /* La "X" siempre visible en el botón de cierre */
+  opacity: 1; 
   transition: opacity 0.2s ease;
 }
 
@@ -385,7 +397,6 @@ button:hover:not(:disabled) {
 }
 
 .chat-bubble .checkbox-wrapper label {
-  
   --size: 65px;
   --shadow: calc(var(--size) * 0.07) calc(var(--size) * 0.1);
   position: relative;
@@ -451,7 +462,7 @@ button:hover:not(:disabled) {
   width: calc(var(--size) * 0.6);
   height: calc(var(--size) * 0.6);
   transform: translate(-50%, -50%);
-  opacity: 0; /* La "X" oculta en el botón de burbuja */
+  opacity: 0; 
   transition: opacity 0.2s ease;
 }
 

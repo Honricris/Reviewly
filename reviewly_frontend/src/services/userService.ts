@@ -2,13 +2,13 @@ export interface UserQuery {
   id: number;
   query_text: string;
   created_at: string;
+  execution_time?: number;
 }
 
 export interface UserCount {
   total_users: number;
 }
 
-// Interface for favorite product data based on your backend response
 export interface FavoriteProduct {
   product_id: number;
   title: string;
@@ -18,8 +18,23 @@ export interface FavoriteProduct {
   image: string | null;
 }
 
+export interface User {
+  id: number;
+  email: string;
+  role: string;
+  github_id?: number;
+  created_at: string;
+}
+
+export interface LoginLog {
+  id: number;
+  user_id: number;
+  ip_address: string;
+  login_at: string;
+}
+
 const userService = {
-  async saveQuery(queryText: string): Promise<void> {
+  async saveQuery(queryText: string, executionTime?: number): Promise<void> {
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
       const apiUrl = `${baseUrl}/user/queries`;
@@ -31,7 +46,10 @@ const userService = {
           'Content-Type': 'application/json',
           ...(token && { Authorization: `Bearer ${token}` }),
         },
-        body: JSON.stringify({ query_text: queryText }),
+        body: JSON.stringify({ 
+          query_text: queryText,
+          ...(executionTime !== undefined && { execution_time: executionTime })
+        }),
       });
 
       if (!response.ok) {
@@ -42,10 +60,10 @@ const userService = {
     }
   },
 
-  async getRecentQueries(): Promise<UserQuery[]> {
+  async getRecentQueries(userId?: number): Promise<UserQuery[]> {
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      const apiUrl = `${baseUrl}/user/queries`;
+      const apiUrl = userId ? `${baseUrl}/user/${userId}/queries` : `${baseUrl}/user/queries`;
       const token = localStorage.getItem('token');
 
       const response = await fetch(apiUrl, {
@@ -63,6 +81,31 @@ const userService = {
       return await response.json();
     } catch (error) {
       console.error('Error fetching user queries:', error);
+      return [];
+    }
+  },
+
+  async getExecutionTimes(startTime: string, endTime: string): Promise<UserQuery[]> {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}/user/execution-times?start_time=${encodeURIComponent(startTime)}&end_time=${encodeURIComponent(endTime)}`;
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching execution times: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching execution times:', error);
       return [];
     }
   },
@@ -145,10 +188,10 @@ const userService = {
     }
   },
 
-  async getFavorites(): Promise<number[]> {
+  async getFavorites(userId?: number): Promise<number[]> {
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      const apiUrl = `${baseUrl}/user/favorites`;
+      const apiUrl = userId ? `${baseUrl}/user/${userId}/favorites` : `${baseUrl}/user/favorites`;
       const token = localStorage.getItem('token');
 
       const response = await fetch(apiUrl, {
@@ -170,6 +213,132 @@ const userService = {
       return [];
     }
   },
+
+  async getLoginLogs(userId: number): Promise<LoginLog[]> {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}/user/${userId}/login-logs`;
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching login logs: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching login logs:', error);
+      return [];
+    }
+  },
+
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}/user`;
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching users: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      return [];
+    }
+  },
+
+  async updateUser(userId: number, data: Partial<User>): Promise<boolean> {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}/user/${userId}`;
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error updating user: ${response.status} ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      return false;
+    }
+  },
+
+  async getProductFavoriteCount(productId: number): Promise<number> {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}/products/${productId}/favorite-count`;
+      const token = localStorage.getItem('token');
+  
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+  
+      if (!response.ok) throw new Error(`Error fetching favorite count: ${response.status}`);
+      const data = await response.json();
+      return data.favoriteCount;
+    } catch (error) {
+      console.error('Error fetching favorite count:', error);
+      return 0;
+    }
+  },
+
+  async deleteUser(userId: number): Promise<boolean> {
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const apiUrl = `${baseUrl}/user/${userId}`;
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(apiUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error deleting user: ${response.status} ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
+  },
 };
 
 export default userService;
+
+

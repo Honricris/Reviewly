@@ -8,18 +8,24 @@ export const getProducts = async (
   name?: string,
   price_min?: number,
   price_max?: number,
-  store?: string
+  store?: string,
+  min_rating?: number,
+  min_favorites?: number,
+  include_favorites?: boolean
 ) => {
   try {
     const response = await apiClient.get('/products/', {
       params: {
-        limit,
         page,
-        ...(category && { category }),
-        ...(name && { name }),
-        ...(price_min !== undefined && { price_min }),
-        ...(price_max !== undefined && { price_max }),
-        ...(store && { store }),
+        limit,
+        category,
+        name,
+        price_min,
+        price_max,
+        store,
+        min_rating,
+        min_favorites,
+        include_favorites
       },
     });
     return response.data;
