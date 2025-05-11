@@ -21,7 +21,8 @@ dist/
 
 .env 
 *.mmdb
-
+*.db
+*.jsonl
 
 # TypeScript config files
 tsconfig.app.json

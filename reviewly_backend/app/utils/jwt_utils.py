@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import current_app
 
 def generate_access_token(user):
-    expiration = datetime.utcnow() + timedelta(hours=2)
+    expiration = datetime.utcnow() + timedelta(hours=48)
 
     payload = {
         "sub": str(user.id), 

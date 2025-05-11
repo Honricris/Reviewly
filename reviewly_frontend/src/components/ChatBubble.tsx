@@ -91,21 +91,23 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
         if (chunk) {
           try {
             const parsedChunk = JSON.parse(chunk);
-            if (parsedChunk.type === 'additional_data' && parsedChunk.data?.report_type) {
-              const { report_type, parameters } = parsedChunk.data;
-              if (onReportGenerate) {
-                onReportGenerate(report_type, parameters);
+            if (parsedChunk.type === 'additional_data') {
+              if (parsedChunk.data?.report_type) {
+                const { report_type, parameters } = parsedChunk.data;
+                if (onReportGenerate) {
+                  onReportGenerate(report_type, parameters);
+                }
               }
+              
               botMessage.reviewIds = parsedChunk.data.review_ids || [];
               botMessage.products = parsedChunk.data.products || [];
-
+            
               if (botMessage.products.length > 0 && onResponse) {
                 onResponse({ products: botMessage.products });
               } else if (botMessage.reviewIds.length > 0 && onResponse) {
                 onResponse({ reviews: botMessage.reviewIds });
               }
-
-            } else if (parsedChunk.type === 'status') {
+            }else if (parsedChunk.type === 'status') {
               const statusMessage = {
                 sender: 'bot' as const,
                 text: parsedChunk.message,

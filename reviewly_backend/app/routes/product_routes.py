@@ -1,14 +1,13 @@
 from flask_restx import Namespace, Resource, fields
 from flask_jwt_extended import jwt_required
+from flask import request
 from app.models.product import Product
-
 from app.services.product_service import (
     get_all_products, get_product_by_id, create_product, update_product, 
     delete_product, get_all_categories, searchProduct, autocomplete_products, 
-    get_product_count , get_product_favorite_count 
+    get_product_count, get_product_favorite_count
 )
 from app.services.review_service import get_reviews_by_product
-from flask import request
 
 api = Namespace('products', description='Product related operations')
 
@@ -75,11 +74,25 @@ class ProductList(Resource):
         except Exception as e:
             return {"error": str(e)}, 500
 
+    @api.expect(product_model)
+    @jwt_required()
+    def post(self):
+        """Create a new product"""
+        data = request.json
+        try:
+            product = create_product(data)
+            if "error" in product:
+                return product, 409
+            return product, 201
+        except Exception as e:
+            return {"error": str(e)}, 400
+
 @api.route('/<int:id>')
 class Product(Resource):
     @api.marshal_with(product_model)
     @jwt_required()
     def get(self, id):
+        """Get a product by ID"""
         product = get_product_by_id(id)
         if not product:
             return {"error": "Product not found"}, 404
@@ -88,21 +101,20 @@ class Product(Resource):
     @api.expect(product_model)
     @jwt_required()
     def put(self, id):
+        """Update a product by ID"""
         data = api.payload
         product = update_product(id, data)
         if not product:
             return {"error": "Product not found"}, 404
         return product, 200
 
-    @jwt_required() 
+    @jwt_required()
     def delete(self, id):
+        """Delete a product by ID"""
         success = delete_product(id)
         if not success:
             return {"error": "Product not found"}, 404
         return {"message": "Product deleted"}, 200
-
-
-
 
 product_search_model = api.model('ProductSearch', {
     'query': fields.String(required=True, description='Search query for products', example="Smartphone with good camera"),
@@ -112,12 +124,12 @@ product_search_model = api.model('ProductSearch', {
     'max_price': fields.Float(description='Maximum price filter for the search results. Optional.')
 })
 
-
 @api.route('/search')
 class ProductSearch(Resource):
     @api.expect(product_search_model)
     @jwt_required()
     def post(self):
+        """Search products by query"""
         data = request.json
         query = data.get('query')
         top_n = data.get('top_n', 5)
@@ -125,26 +137,24 @@ class ProductSearch(Resource):
         min_price = data.get('min_price')
         max_price = data.get('max_price')
         
-        
         if not query:
             return {"error": "Query parameter is required."}, 400
         
         result = searchProduct(query, top_n, category, min_price, max_price)
-
         return result, 200
-    
-
 
 @api.route('/categories')
 class ProductCategories(Resource):
     @jwt_required()
     def get(self):
-        categories = get_all_categories() 
+        """Get all product categories"""
+        categories = get_all_categories()
         return {"categories": categories}, 200
-    
+
 favorite_count_model = api.model('FavoriteCount', {
     'favoriteCount': fields.Integer(description='Number of users who favorited the product')
 })
+
 @api.route('/<int:product_id>/favorite-count')
 class ProductFavoriteCount(Resource):
     @jwt_required()
@@ -156,13 +166,14 @@ class ProductFavoriteCount(Resource):
             return {'favoriteCount': count}, 200
         except Exception as e:
             return {"error": str(e)}, 500
-        
+
 @api.route('/<int:id>/reviews')
 class ProductReviews(Resource):
     @api.param('page', 'Page number for review pagination', type=int, default=1)
     @api.param('limit', 'Number of reviews to return', type=int, default=10)
     @jwt_required()
     def get(self, id):
+        """Get reviews for a product"""
         page = int(request.args.get('page', 1))
         per_page = 10
         offset = (page - 1) * per_page
@@ -193,8 +204,9 @@ class ProductAutocomplete(Resource):
     @api.marshal_with(autocomplete_model)
     @jwt_required()
     def get(self):
+        """Autocomplete product search"""
         search_term = request.args.get('term', '').strip()
-        limit = min(int(request.args.get('limit', 3)), 10) 
+        limit = min(int(request.args.get('limit', 3)), 10)
         
         if len(search_term) < 2:
             return {
@@ -208,10 +220,11 @@ class ProductAutocomplete(Resource):
             "search_term": search_term,
             "suggestions": suggestions
         }, 200
-    
+
 product_count_model = api.model('ProductCount', {
     'total_products': fields.Integer(description='Total number of products')
 })
+
 @api.route('/count')
 class ProductCount(Resource):
     @jwt_required()
@@ -223,5 +236,3 @@ class ProductCount(Resource):
             return {"total_products": total_products}, 200
         except Exception as e:
             return {"error": str(e)}, 500
-        
-
