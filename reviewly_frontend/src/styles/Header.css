@@ -2,7 +2,7 @@
   z-index: 1000;
   position: fixed;
   display: flex;
-  justify-content: space-between; 
+  justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
   width: 100%;
@@ -22,30 +22,57 @@
 }
 
 .home-link-container {
-  flex: 1; 
+  flex: 1;
   display: flex;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
-  gap: 16px; 
+  gap: 16px;
 }
 
 .nav-button {
   font-family: 'Helvetica Neue', sans-serif;
   font-size: 18px;
-  font-weight: 500; 
-  color: #333; 
-  text-decoration: none; 
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
   padding: 8px 16px;
   border-radius: 4px;
-  transition: color 0.3s ease-in-out, transform 0.2s ease-in-out; 
-  letter-spacing: 0.5px; 
-  background: none; 
-  border: none; 
+  transition: color 0.3s ease-in-out, transform 0.2s ease-in-out;
+  letter-spacing: 0.5px;
+  background: none;
+  border: none;
   cursor: pointer;
 }
 
 .nav-button:hover {
-  color: #2d79f3; 
-  transform: scale(1.05); 
-  background: none; 
+  color: #2d79f3;
+  transform: scale(1.05);
+  background: none;
+}
+
+.admin-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.admin-text {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.admin-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  background-color: #2d79f3;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 50%;
 }

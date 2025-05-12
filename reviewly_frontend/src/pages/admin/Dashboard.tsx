@@ -1,7 +1,5 @@
 import '../../styles/AdminDashboard.css';
 import ChatBubble from '../../components/ChatBubble';
-import UserManagement from '../../components/admin/UserManagement';
-import ReportGenerator from '../../components/admin/ReportGenerator';
 import { generateReportPDF } from '../../components/admin/ReportGenerator';
 import React, { useState, useEffect, useRef } from 'react';
 import userService from '../../services/userService';
@@ -15,6 +13,7 @@ import 'leaflet-fullscreen/dist/leaflet.fullscreen.css';
 import 'leaflet-fullscreen';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import Header from '../../components/Header';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -33,8 +32,6 @@ const AdminDashboard = () => {
   const [mapError, setMapError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('week');
   const [sliderValue, setSliderValue] = useState(7);
-  const [showUserManagement, setShowUserManagement] = useState(false);
-  const [showReportGenerator, setShowReportGenerator] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
   const heatLayerRef = useRef<L.HeatLayer | null>(null);
   const navigate = useNavigate();
@@ -60,11 +57,11 @@ const AdminDashboard = () => {
             getDateRange(7).end
           )
         ]);
-  
+
         setUserCount(userCount);
         setProductCount(productCount);
         setExecutionTimes(executionData);
-  
+
         const heatData = await getHeatmapData();
         setHeatmapData(heatData);
       } catch (error) {
@@ -75,7 +72,7 @@ const AdminDashboard = () => {
         setHeatmapData([]);
       }
     };
-  
+
     fetchInitialData();
   }, []);
 
@@ -145,8 +142,6 @@ const AdminDashboard = () => {
 
   const toggleChat = () => setShowChat((prev) => !prev);
   const handleLogout = () => navigate('/login');
-  const toggleUserManagement = () => setShowUserManagement(prev => !prev);
-  const toggleReportGenerator = () => setShowReportGenerator(prev => !prev);
 
   const handleReportGenerate = async (reportType: string, parameters: any) => {
     try {
@@ -163,15 +158,63 @@ const AdminDashboard = () => {
     { title: "Income", value: "$12,345", change: "+18%", trend: "up" }
   ];
 
-  const chartData = {
-    labels: executionTimes.map(query => new Date(query.created_at).toLocaleDateString()),
-    datasets: [{
-      label: 'Query Execution Time (seconds)',
-      data: executionTimes.map(query => query.execution_time || 0),
-      fill: false,
-      borderColor: 'rgb(75, 192, 192)',
-      tension: 0.1
-    }]
+  // Function to calculate percentiles from execution times
+  const calculatePercentiles = (data: number[], percentiles: number[]) => {
+    if (data.length === 0) return percentiles.map(() => 0);
+    const sorted = [...data].sort((a, b) => a - b);
+    return percentiles.map(p => {
+      const index = Math.ceil((p / 100) * sorted.length) - 1;
+      return sorted[index] || 0;
+    });
+  };
+
+  // Process execution times for chart data
+  const processedChartData = () => {
+    const dates = executionTimes.map(query => new Date(query.created_at).toLocaleDateString());
+    const times = executionTimes.map(query => query.execution_time || 0);
+
+    // Calculate percentiles (10th, 50th, 90th) for each time range
+    const percentiles = calculatePercentiles(times, [10, 50, 90]);
+
+    return {
+      labels: dates,
+      datasets: [
+        {
+          label: 'All Queries',
+          data: times,
+          fill: false,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1,
+        },
+        {
+          label: '10th Percentile (Fastest)',
+          data: Array(dates.length).fill(percentiles[0]),
+          fill: false,
+          borderColor: 'rgb(0, 128, 0)',
+          borderDash: [5, 5],
+          tension: 0,
+          pointRadius: 0,
+        },
+        {
+          label: '50th Percentile (Median)',
+          data: Array(dates.length).fill(percentiles[1]),
+          fill: false,
+          borderColor: 'rgb(255, 165, 0)',
+          borderDash: [5, 5],
+          tension: 0,
+          pointRadius: 0,
+        },
+        {
+          label: '90th Percentile (Slowest)',
+          data: Array(dates.length).fill(percentiles[2]),
+          fill: false,
+          borderColor: 'rgb(255, 0, 0)',
+          borderDash: [5, 5],
+          tension: 0,
+          pointRadius: 0,
+        },
+      ],
+    };
   };
 
   const chartOptions = {
@@ -182,113 +225,111 @@ const AdminDashboard = () => {
       },
       title: {
         display: true,
-        text: 'Query Execution Times'
-      }
+        text: 'Query Execution Times with Percentiles',
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y;
+            return `${label}: ${value.toFixed(3)}s`;
+          },
+        },
+      },
     },
     scales: {
       y: {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Execution Time (s)'
-        }
+          text: 'Execution Time (s)',
+        },
       },
       x: {
         title: {
           display: true,
-          text: 'Date'
-        }
-      }
-    }
+          text: 'Date',
+        },
+      },
+    },
   };
 
   return (
     <div className="admin-dashboard">
-      <header className="dashboard-header">
-        <h1>Admin Panel</h1>
-        <div className="user-profile">
-          <span>Admin</span>
-          <div className="avatar">A</div>
-          <button className="logout-btn" onClick={handleLogout}>Logout</button>
-        </div>
-      </header>
-
-      <div className="stats-grid">
-        {stats.map((stat, index) => (
-          <div key={index} className="stat-card">
-            <h3>{stat.title}</h3>
-            <div className="stat-value">{stat.value}</div>
-            <div className={`stat-change ${stat.trend}`}>
-              {stat.change} {stat.trend === 'up' ? '↑' : '↓'}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="dashboard-content">
-        <section className="map-section">
-          <h2>Access Heatmap</h2>
-          <div className="time-controls" style={{ marginBottom: '15px' }}>
-            <div style={{ marginBottom: '10px' }}>
-              <button
-                onClick={() => { setTimeRange('week'); setSliderValue(7); }}
-                className={timeRange === 'week' ? 'active' : ''}
-                style={{ marginRight: '10px' }}
-              >
-                Week
-              </button>
-              <button
-                onClick={() => { setTimeRange('month'); setSliderValue(30); }}
-                className={timeRange === 'month' ? 'active' : ''}
-              >
-                Month
-              </button>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max={timeRange === 'week' ? "7" : "30"}
-              value={sliderValue}
-              onChange={handleSliderChange}
-              style={{ width: '100%' }}
-            />
-            <div>
-              Last {sliderValue} days
-            </div>
-          </div>
-          {mapError && <div className="map-error">{mapError}</div>}
-          <div id="map" style={{ height: '400px', width: '100%' }}></div>
-        </section>
-
-        <section className="chart-section">
-          <h2>Query Performance</h2>
-          <div style={{ height: '400px', width: '100%' }}>
-            <Line data={chartData} options={chartOptions} />
-          </div>
-        </section>
-
-        <section className="quick-actions">
-          <h2>Quick Actions</h2>
-          <div className="action-buttons">
-            <button className="action-btn"><span>+</span> Add Product</button>
-            <button className="action-btn" onClick={toggleUserManagement}>
-              <span>👥</span> Manage Users
-            </button>
-            <button className="action-btn" onClick={toggleReportGenerator}>
-              <span>📊</span> Generate Report
-            </button>
-            <button className="action-btn"><span>⚙️</span> Settings</button>
-          </div>
-        </section>
-      </div>
-
-      {showUserManagement && <UserManagement onClose={toggleUserManagement} />}
-      {showReportGenerator && <ReportGenerator onClose={toggleReportGenerator} />}
-      <ChatBubble 
-        onClick={toggleChat} 
-        isOpen={showChat} 
-        onReportGenerate={handleReportGenerate} 
+      <Header
+        buttonConfig={{ showHome: true, showFavourites: false, showLogout: true, isAdmin: true }}
+        showSearchBar={false}
       />
+      <div className="dashboard-container">
+        <div className="stats-grid">
+          {stats.map((stat, index) => (
+            <div key={index} className="stat-card">
+              <h3>{stat.title}</h3>
+              <div className="stat-value">{stat.value}</div>
+              <div className={`stat-change ${stat.trend}`}>
+                {stat.change} {stat.trend === 'up' ? '↑' : '↓'}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="dashboard-content">
+          <section className="map-section">
+            <h2>Access Heatmap</h2>
+            <div className="time-controls" style={{ marginBottom: '15px' }}>
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  onClick={() => { setTimeRange('week'); setSliderValue(7); }}
+                  className={timeRange === 'week' ? 'active' : ''}
+                  style={{ marginRight: '10px' }}
+                >
+                  Week
+                </button>
+                <button
+                  onClick={() => { setTimeRange('month'); setSliderValue(30); }}
+                  className={timeRange === 'month' ? 'active' : ''}
+                >
+                  Month
+                </button>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max={timeRange === 'week' ? "7" : "30"}
+                value={sliderValue}
+                onChange={handleSliderChange}
+                style={{ width: '100%' }}
+              />
+              <div>
+                Last {sliderValue} days
+              </div>
+            </div>
+            {mapError && <div className="map-error">{mapError}</div>}
+            <div id="map" style={{ height: '400px', width: '100%' }}></div>
+          </section>
+
+          <section className="chart-section">
+            <h2>Query Performance</h2>
+            <div style={{ height: '400px', width: '100%' }}>
+              <Line data={processedChartData()} options={chartOptions} />
+            </div>
+          </section>
+
+          <section className="quick-actions">
+            <h2>Quick Actions</h2>
+            <div className="action-buttons">
+              <button className="action-btn"><span>+</span> Add Product</button>
+              <button className="action-btn"><span>⚙️</span> Settings</button>
+            </div>
+          </section>
+        </div>
+
+        <ChatBubble 
+          onClick={toggleChat} 
+          isOpen={showChat} 
+          onReportGenerate={handleReportGenerate} 
+        />
+      </div>
     </div>
   );
 };
