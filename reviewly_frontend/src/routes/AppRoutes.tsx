@@ -31,6 +31,7 @@ const AppRoutes = () => {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<UserManagementPage />} />
           <Route path="/admin/reports" element={<ReportGeneratorPage />} />
+          
         </Route>
 
         <Route path="/login" element={<Login />} />

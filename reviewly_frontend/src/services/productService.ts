@@ -1,6 +1,5 @@
 import apiClient from './apiClient';
 
-
 export const getProducts = async (
   page: number,
   limit?: number,
@@ -44,7 +43,6 @@ export const getProductById = async (productId: string) => {
     throw error;
   }
 };
-
 
 export const getProductReviews = async (productId: string, page: number = 1) => {
   try {
@@ -104,5 +102,19 @@ export const getProductCount = async (): Promise<number> => {
   } catch (error) {
     console.error('Error fetching product count:', error);
     return 0;
+  }
+};
+
+export const getMostFavoritedProducts = async (startDate: string, endDate: string, limit: number = 10) => {
+  try {
+    const response = await apiClient.post('/products/most-favorited', {
+      start_date: startDate,
+      end_date: endDate,
+      limit
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching most favorited products:', error);
+    throw error;
   }
 };

@@ -27,6 +27,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [isFavorited, setIsFavorited] = useState(favoriteIds.includes(id)); 
 
   const handleClick = () => {
+    console.log('Navigating to:', `/products/${id}`);
     navigate(`/products/${id}`);
   };
 

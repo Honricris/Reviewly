@@ -483,3 +483,45 @@ def get_product_count() -> int:
     except Exception as e:
         print(f"Error in get_product_count: {str(e)}")
         raise
+
+def get_most_favorited_products(start_date: str, end_date: str, limit: int = 10) -> list:
+    """
+    Obtiene los productos más añadidos a favoritos entre dos fechas.
+
+    Args:
+        start_date (str): Fecha de inicio en formato YYYY-MM-DD.
+        end_date (str): Fecha de fin en formato YYYY-MM-DD.
+        limit (int): Número máximo de productos a devolver.
+
+    Returns:
+        list: Lista de diccionarios con product_id y favorite_count.
+    """
+    try:
+        query = db.session.execute(
+            text("""
+                SELECT product_id, COUNT(*) as favorite_count
+                FROM user_favorites
+                WHERE created_at BETWEEN :start_date AND :end_date
+                GROUP BY product_id
+                ORDER BY favorite_count DESC
+                LIMIT :limit
+            """),
+            {
+                'start_date': start_date,
+                'end_date': f"{end_date} 23:59:59",
+                'limit': limit
+            }
+        ).fetchall()
+
+        result = [
+            {
+                'product_id': row.product_id,
+                'favorite_count': row.favorite_count
+            }
+            for row in query
+        ]
+
+        return result
+    except Exception as e:
+        print(f"Error fetching most favorited products: {e}")
+        raise

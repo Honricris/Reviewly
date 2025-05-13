@@ -3,7 +3,7 @@ import ChatBubble from '../../components/ChatBubble';
 import { generateReportPDF } from '../../components/admin/ReportGenerator';
 import React, { useState, useEffect, useRef } from 'react';
 import userService from '../../services/userService';
-import { getProductCount, getProducts } from '../../services/productService';
+import { getProductCount, getMostFavoritedProducts, getProductById } from '../../services/productService';
 import { getHeatmapData } from '../../services/heathmapService';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
@@ -11,11 +11,16 @@ import 'leaflet.heat';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-fullscreen/dist/leaflet.fullscreen.css';
 import 'leaflet-fullscreen';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Line, Pie } from 'react-chartjs-2';
 import Header from '../../components/Header';
+import ProductCard from '../../components/ProductCard';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
 interface HeatmapPoint {
   lat: number;
@@ -23,53 +28,113 @@ interface HeatmapPoint {
   weight: number;
 }
 
+interface Product {
+  product_id: number;
+  title: string;
+  images: string[];
+  store: string;
+  price: number;
+  average_rating: number;
+  main_category: string;
+}
+
 const AdminDashboard = () => {
   const [showChat, setShowChat] = useState(false);
   const [userCount, setUserCount] = useState<number | null>(null);
   const [productCount, setProductCount] = useState<number | null>(null);
+  const [productsSavedToday, setProductsSavedToday] = useState<number | null>(null);
   const [heatmapData, setHeatmapData] = useState<HeatmapPoint[]>([]);
   const [executionTimes, setExecutionTimes] = useState<any[]>([]);
   const [mapError, setMapError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('week');
   const [sliderValue, setSliderValue] = useState(7);
+  const [mostFavoritedProducts, setMostFavoritedProducts] = useState<Product[]>([]);
+  const [currentProductPage, setCurrentProductPage] = useState(0);
+  const [startDate, setStartDate] = useState<Date | null>(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000));
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); // New state for favorite IDs
   const mapRef = useRef<L.Map | null>(null);
   const heatLayerRef = useRef<L.HeatLayer | null>(null);
   const navigate = useNavigate();
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  const PRODUCTS_PER_PAGE = 3;
+
   const getDateRange = (days: number) => {
     const now = new Date();
     const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     return {
-      start: startDate.toISOString(),
-      end: now.toISOString()
+      start: startDate.toISOString().split('T')[0],
+      end: now.toISOString().split('T')[0]
     };
+  };
+
+  const getTodayDateRange = () => {
+    const today = new Date();
+    return {
+      start: today.toISOString().split('T')[0],
+      end: today.toISOString().split('T')[0]
+    };
+  };
+
+  const fetchMostFavoritedProducts = async (start: string, end: string) => {
+    try {
+      const favoritedData = await getMostFavoritedProducts(start, end, 30);
+      const productPromises = favoritedData.map((item: { product_id: number }) =>
+        getProductById(item.product_id.toString())
+      );
+      const products = await Promise.all(productPromises);
+      setMostFavoritedProducts(products);
+    } catch (error) {
+      console.error('Error fetching most favorited products:', error);
+      setMostFavoritedProducts([]);
+    }
+  };
+
+  const fetchProductsSavedToday = async () => {
+    try {
+      const { start, end } = getTodayDateRange();
+      const favoritedData = await getMostFavoritedProducts(start, end, 1000);
+      setProductsSavedToday(favoritedData.length);
+    } catch (error) {
+      console.error('Error fetching products saved today:', error);
+      setProductsSavedToday(0);
+    }
   };
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [userCount, productCount, executionData] = await Promise.all([
+        const [userCount, productCount, executionData, favoriteIdsData] = await Promise.all([
           userService.getUserCount(),
           getProductCount(),
           userService.getExecutionTimes(
             getDateRange(7).start,
             getDateRange(7).end
-          )
+          ),
+          userService.getFavorites() // Fetch favorite IDs
         ]);
 
         setUserCount(userCount);
         setProductCount(productCount);
         setExecutionTimes(executionData);
+        setFavoriteIds(favoriteIdsData); // Set favorite IDs
 
         const heatData = await getHeatmapData();
         setHeatmapData(heatData);
+
+        const { start, end } = getDateRange(5);
+        await fetchMostFavoritedProducts(start, end);
+        await fetchProductsSavedToday();
       } catch (error) {
         console.error('Failed to fetch initial data:', error);
         setUserCount(0);
         setProductCount(0);
+        setProductsSavedToday(0);
         setExecutionTimes([]);
         setHeatmapData([]);
+        setMostFavoritedProducts([]);
+        setFavoriteIds([]); // Set empty favorite IDs on error
       }
     };
 
@@ -86,7 +151,7 @@ const AdminDashboard = () => {
       const { start, end } = getDateRange(value);
       try {
         const [newHeatData, newExecutionData] = await Promise.all([
-          getHeatmapData(start.split('T')[0], end.split('T')[0]),
+          getHeatmapData(start, end),
           userService.getExecutionTimes(start, end)
         ]);
         setHeatmapData(newHeatData);
@@ -95,6 +160,15 @@ const AdminDashboard = () => {
         console.error('Error updating data:', error);
       }
     }, 500);
+  };
+
+  const handleDateRangeChange = async () => {
+    if (startDate && endDate) {
+      const start = startDate.toISOString().split('T')[0];
+      const end = endDate.toISOString().split('T')[0];
+      await fetchMostFavoritedProducts(start, end);
+      setCurrentProductPage(0);
+    }
   };
 
   useEffect(() => {
@@ -154,11 +228,15 @@ const AdminDashboard = () => {
   const stats = [
     { title: 'Total Users', value: userCount ?? 'Loading...', change: userCount !== null ? '+12%' : '', trend: 'up' },
     { title: 'Products', value: productCount ?? 'Loading...', change: productCount !== null ? '+5%' : '', trend: 'up' },
-    { title: "Products saved today", value: "87", change: "-2%", trend: "down" },
-    { title: "Income", value: "$12,345", change: "+18%", trend: "up" }
+    { 
+      title: 'Products saved today', 
+      value: productsSavedToday ?? 'Loading...', 
+      change: productsSavedToday !== null ? '-2%' : '', 
+      trend: 'down' 
+    },
+    { title: 'Income', value: '$12,345', change: '+18%', trend: 'up' }
   ];
 
-  // Function to calculate percentiles from execution times
   const calculatePercentiles = (data: number[], percentiles: number[]) => {
     if (data.length === 0) return percentiles.map(() => 0);
     const sorted = [...data].sort((a, b) => a - b);
@@ -168,12 +246,10 @@ const AdminDashboard = () => {
     });
   };
 
-  // Process execution times for chart data
   const processedChartData = () => {
     const dates = executionTimes.map(query => new Date(query.created_at).toLocaleDateString());
     const times = executionTimes.map(query => query.execution_time || 0);
 
-    // Calculate percentiles (10th, 50th, 90th) for each time range
     const percentiles = calculatePercentiles(times, [10, 50, 90]);
 
     return {
@@ -219,13 +295,21 @@ const AdminDashboard = () => {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false, 
+    resizeDelay: 100, 
     plugins: {
       legend: {
         position: 'top' as const,
+        labels: {
+          font: { size: 14 }, 
+          color: '#333',
+        },
       },
       title: {
         display: true,
         text: 'Query Execution Times with Percentiles',
+        font: { size: 18 }, 
+        color: '#333',
       },
       tooltip: {
         callbacks: {
@@ -243,16 +327,85 @@ const AdminDashboard = () => {
         title: {
           display: true,
           text: 'Execution Time (s)',
+          font: { size: 14 }, // Improved readability
         },
       },
       x: {
         title: {
           display: true,
           text: 'Date',
+          font: { size: 14 }, // Improved readability
         },
       },
     },
   };
+
+  const categoryChartData = () => {
+    const categoryCounts: { [key: string]: number } = {};
+    mostFavoritedProducts.forEach((product) => {
+      const category = product.main_category || 'Unknown';
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    const labels = Object.keys(categoryCounts);
+    const data = Object.values(categoryCounts);
+    const colors = [
+      '#FF6B6B',
+      '#4ECDC4',
+      '#45B7D1',
+      '#96CEB4',
+      '#FFEEAD',
+      '#D4A5A5',
+      '#9B59B6',
+    ];
+
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: colors.slice(0, labels.length),
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        },
+      ],
+    };
+  };
+
+  const categoryChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    resizeDelay: 100, // Debounce resize updates
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          font: { size: 14 },
+          color: '#333',
+        },
+      },
+      title: {
+        display: true,
+        text: 'Category Distribution',
+        font: { size: 18 },
+        color: '#333',
+      },
+    },
+  };
+
+  const handlePrevProducts = () => {
+    setCurrentProductPage(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleNextProducts = () => {
+    const maxPage = Math.ceil(mostFavoritedProducts.length / PRODUCTS_PER_PAGE) - 1;
+    setCurrentProductPage(prev => Math.min(prev + 1, maxPage));
+  };
+
+  const displayedProducts = mostFavoritedProducts.slice(
+    currentProductPage * PRODUCTS_PER_PAGE,
+    (currentProductPage + 1) * PRODUCTS_PER_PAGE
+  );
 
   return (
     <div className="admin-dashboard">
@@ -274,54 +427,118 @@ const AdminDashboard = () => {
         </div>
 
         <div className="dashboard-content">
-          <section className="map-section">
-            <h2>Access Heatmap</h2>
-            <div className="time-controls" style={{ marginBottom: '15px' }}>
-              <div style={{ marginBottom: '10px' }}>
+          <div className="row">
+            <section className="map-section">
+              <h2>Access Heatmap</h2>
+              <div className="time-controls">
+                <div>
+                  <button
+                    onClick={() => { setTimeRange('week'); setSliderValue(7); }}
+                    className={timeRange === 'week' ? 'active' : ''}
+                  >
+                    Week
+                  </button>
+                  <button
+                    onClick={() => { setTimeRange('month'); setSliderValue(30); }}
+                    className={timeRange === 'month' ? 'active' : ''}
+                  >
+                    Month
+                  </button>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max={timeRange === 'week' ? "7" : "30"}
+                  value={sliderValue}
+                  onChange={handleSliderChange}
+                />
+                <div>Last {sliderValue} days</div>
+              </div>
+              {mapError && <div className="map-error">{mapError}</div>}
+              <div id="map"></div>
+            </section>
+            <section className="chart-section">
+              <h2>Query Performance</h2>
+              <div className="chart-container" style={{ position: 'relative', height: '450px', width: '600px' }}>
+                <Line data={processedChartData()} options={chartOptions} />
+              </div>
+            </section>
+          </div>
+
+          <div className="row">
+            <section className="most-favorited-section">
+              <h2>Most Favorited Products</h2>
+              <div className="date-range-selector">
+                <label>Start Date:</label>
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date: Date) => setStartDate(date)}
+                  dateFormat="yyyy-MM-dd"
+                  maxDate={endDate || new Date()}
+                  className="date-picker"
+                />
+                <label>End Date:</label>
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date: Date) => setEndDate(date)}
+                  dateFormat="yyyy-MM-dd"
+                  minDate={startDate}
+                  maxDate={new Date()}
+                  className="date-picker"
+                />
                 <button
-                  onClick={() => { setTimeRange('week'); setSliderValue(7); }}
-                  className={timeRange === 'week' ? 'active' : ''}
-                  style={{ marginRight: '10px' }}
+                  onClick={handleDateRangeChange}
+                  disabled={!startDate || !endDate}
                 >
-                  Week
-                </button>
-                <button
-                  onClick={() => { setTimeRange('month'); setSliderValue(30); }}
-                  className={timeRange === 'month' ? 'active' : ''}
-                >
-                  Month
+                  Update
                 </button>
               </div>
-              <input
-                type="range"
-                min="1"
-                max={timeRange === 'week' ? "7" : "30"}
-                value={sliderValue}
-                onChange={handleSliderChange}
-                style={{ width: '100%' }}
-              />
-              <div>
-                Last {sliderValue} days
+              <div className="product-carousel">
+                <button
+                  onClick={handlePrevProducts}
+                  disabled={currentProductPage === 0}
+                  className="carousel-button prev"
+                >
+                  <ArrowBackIcon />
+                </button>
+                <div className="product-grid">
+                  {displayedProducts.length > 0 ? (
+                    displayedProducts.map((product) => (
+                      <ProductCard
+                        key={product.product_id}
+                        id={product.product_id}
+                        name={product.title}
+                        imageUrl={product.images[0] || 'https://via.placeholder.com/150'}
+                        store={product.store}
+                        price={product.price}
+                        averageRating={product.average_rating}
+                        favoriteIds={favoriteIds} // Pass favoriteIds to ProductCard
+                      />
+                    ))
+                  ) : (
+                    <p>No products found for the selected date range.</p>
+                  )}
+                </div>
+                <button
+                  onClick={handleNextProducts}
+                  disabled={currentProductPage >= Math.ceil(mostFavoritedProducts.length / PRODUCTS_PER_PAGE) - 1}
+                  className="carousel-button next"
+                >
+                  <ArrowForwardIcon />
+                </button>
               </div>
-            </div>
-            {mapError && <div className="map-error">{mapError}</div>}
-            <div id="map" style={{ height: '400px', width: '100%' }}></div>
-          </section>
-
-          <section className="chart-section">
-            <h2>Query Performance</h2>
-            <div style={{ height: '400px', width: '100%' }}>
-              <Line data={processedChartData()} options={chartOptions} />
-            </div>
-          </section>
-
-          <section className="quick-actions">
-            <h2>Quick Actions</h2>
-            <div className="action-buttons">
-              <button className="action-btn"><span>+</span> Add Product</button>
-              <button className="action-btn"><span>⚙️</span> Settings</button>
-            </div>
-          </section>
+            </section>
+            <section className="category-chart-section">
+              <h2>Category Distribution</h2>
+              <div className="chart-container" style={{ position: 'relative', height: '450px', width: '450px' }}>
+                {mostFavoritedProducts.length > 0 ? (
+                  <Pie data={categoryChartData()} options={categoryChartOptions} />
+                ) : (
+                  <p>No data available for category distribution.</p>
+                )}
+              </div>
+            </section>
+          </div>
         </div>
 
         <ChatBubble 

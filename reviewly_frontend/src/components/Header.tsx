@@ -23,13 +23,16 @@ const Header: React.FC<HeaderProps> = ({
   onSearch,
   onSearchFocus,
   onSearchBlur,
-  buttonConfig = { showHome: true, showFavourites: true, showLogout: true, isAdmin: false },
+  buttonConfig = { showHome: true, showFavourites: true, showLogout: true },
   showSearchBar = true,
 }) => {
   const { searchQuery, setSearchQuery, isExpanded, setIsExpanded, searchBarRef } = useSearchBar();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
+
+  const isAdminUser = buttonConfig.isAdmin !== undefined ? buttonConfig.isAdmin : isAdmin();
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -56,11 +59,18 @@ const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const handleHome = () => {
+    navigate(isAdminUser ? '/admin/dashboard' : '/products');
+    setIsMenuOpen(false);
+  };
+
+  const handleProducts = () => {
     navigate('/products');
+    setIsMenuOpen(false);
   };
 
   const handleFavourites = () => {
     navigate('/favourites');
+    setIsMenuOpen(false);
   };
 
   const handleLogout = async () => {
@@ -68,9 +78,14 @@ const Header: React.FC<HeaderProps> = ({
       await logout();
       setSearchQuery('');
       navigate('/login');
+      setIsMenuOpen(false);
     } catch (error) {
       console.error('Error during logout:', error);
     }
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
   return (
@@ -81,31 +96,38 @@ const Header: React.FC<HeaderProps> = ({
         transition: 'transform 0.3s ease-in-out',
       }}
     >
-      <Link to="/products" className="home-button">
-        <img src={reviewlyButtonImage} alt="Go to Products" className="home-button-image" />
+      <Link to={isAdminUser ? '/admin/dashboard' : '/products'} className="home-button">
+        <img src={reviewlyButtonImage} alt="Go to Home" className="home-button-image" />
       </Link>
 
-      <div className="home-link-container">
+      <button className="hamburger-menu" onClick={toggleMenu}>
+        <span className="hamburger-icon"></span>
+      </button>
+
+      <div className={`home-link-container ${isMenuOpen ? 'open' : ''}`}>
         {buttonConfig.showHome && (
           <button onClick={handleHome} className="nav-button">
             Home
           </button>
         )}
-        {buttonConfig.showFavourites && (
-          <button onClick={handleFavourites} className="nav-button">
-            Favourites
-          </button>
-        )}
-        {buttonConfig.isAdmin && (
+        {isAdminUser && (
           <>
-            <button onClick={() => navigate('/admin/users')} className="nav-button">
+            <button onClick={() => { navigate('/admin/users'); setIsMenuOpen(false); }} className="nav-button">
               Manage Users
             </button>
-            <button onClick={() => navigate('/admin/reports')} className="nav-button">
+            <button onClick={() => { navigate('/admin/reports'); setIsMenuOpen(false); }} className="nav-button">
               Generate Report
+            </button>
+            <button onClick={handleProducts} className="nav-button">
+              Products
             </button>
           </>
         )}
+
+        <button onClick={handleFavourites} className="nav-button">
+          Favourites
+        </button>
+
         {buttonConfig.showLogout && (
           <button onClick={handleLogout} className="nav-button">
             Logout
@@ -128,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       )}
 
-      {buttonConfig.isAdmin && (
+      {isAdminUser && (
         <div className="admin-indicator">
           <span className="admin-text">Admin</span>
           <div className="admin-icon">A</div>

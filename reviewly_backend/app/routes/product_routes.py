@@ -5,9 +5,10 @@ from app.models.product import Product
 from app.services.product_service import (
     get_all_products, get_product_by_id, create_product, update_product, 
     delete_product, get_all_categories, searchProduct, autocomplete_products, 
-    get_product_count, get_product_favorite_count
+    get_product_count, get_product_favorite_count, get_most_favorited_products
 )
 from app.services.review_service import get_reviews_by_product
+from datetime import datetime
 
 api = Namespace('products', description='Product related operations')
 
@@ -234,5 +235,40 @@ class ProductCount(Resource):
         try:
             total_products = get_product_count()
             return {"total_products": total_products}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+most_favorited_input_model = api.model('MostFavoritedInput', {
+    'start_date': fields.String(required=True, description='Fecha de inicio en formato YYYY-MM-DD', example='2025-01-01'),
+    'end_date': fields.String(required=True, description='Fecha de fin en formato YYYY-MM-DD', example='2025-05-01'),
+    'limit': fields.Integer(required=False, description='Número máximo de productos a devolver', example=10, default=10)
+})
+
+most_favorited_model = api.model('MostFavorited', {
+    'product_id': fields.Integer(description='ID del producto', example=1),
+    'favorite_count': fields.Integer(description='Número de veces que el producto fue marcado como favorito', example=50)
+})
+
+@api.route('/most-favorited')
+class MostFavoritedProducts(Resource):
+    @api.expect(most_favorited_input_model)
+    @jwt_required()
+    @api.marshal_list_with(most_favorited_model)
+    def post(self):
+        """Obtiene los IDs de los productos más guardados en favoritos en un rango de fechas"""
+        data = request.json
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        limit = data.get('limit', 10)
+
+        try:
+            datetime.strptime(start_date, '%Y-%m-%d')
+            datetime.strptime(end_date, '%Y-%m-%d')
+        except ValueError:
+            return {"error": "Formato de fecha inválido. Use YYYY-MM-DD."}, 400
+
+        try:
+            result = get_most_favorited_products(start_date, end_date, limit)
+            return result, 200
         except Exception as e:
             return {"error": str(e)}, 500
