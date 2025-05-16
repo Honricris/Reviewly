@@ -1,5 +1,5 @@
 .products-menu-header {
-  z-index: 1000;
+  z-index: 3000;
   position: fixed;
   display: flex;
   justify-content: space-between;
@@ -109,14 +109,15 @@
   top: 8px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1000px) {
   .hamburger-menu {
     display: block;
-    z-index: 1001;
+    z-index: 7000;
   }
 
   .home-link-container {
     position: absolute;
+
     top: 60px;
     left: 0;
     width: 100%;
@@ -130,6 +131,8 @@
 
   .home-link-container.open {
     transform: translateX(0);
+    z-index: 5000; 
+
   }
 
   .nav-button {

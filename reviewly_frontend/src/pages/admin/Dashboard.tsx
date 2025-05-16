@@ -52,7 +52,8 @@ const AdminDashboard = () => {
   const [currentProductPage, setCurrentProductPage] = useState(0);
   const [startDate, setStartDate] = useState<Date | null>(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000));
   const [endDate, setEndDate] = useState<Date | null>(new Date());
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]); // New state for favorite IDs
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+  const [chartData, setChartData] = useState<any | null>(null); // New state for chart data
   const mapRef = useRef<L.Map | null>(null);
   const heatLayerRef = useRef<L.HeatLayer | null>(null);
   const navigate = useNavigate();
@@ -112,13 +113,13 @@ const AdminDashboard = () => {
             getDateRange(7).start,
             getDateRange(7).end
           ),
-          userService.getFavorites() // Fetch favorite IDs
+          userService.getFavorites()
         ]);
 
         setUserCount(userCount);
         setProductCount(productCount);
         setExecutionTimes(executionData);
-        setFavoriteIds(favoriteIdsData); // Set favorite IDs
+        setFavoriteIds(favoriteIdsData);
 
         const heatData = await getHeatmapData();
         setHeatmapData(heatData);
@@ -134,7 +135,7 @@ const AdminDashboard = () => {
         setExecutionTimes([]);
         setHeatmapData([]);
         setMostFavoritedProducts([]);
-        setFavoriteIds([]); // Set empty favorite IDs on error
+        setFavoriteIds([]);
       }
     };
 
@@ -223,6 +224,10 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error('Error generating report:', err);
     }
+  };
+
+  const handleChartData = (chartConfig: any) => {
+    setChartData(chartConfig);
   };
 
   const stats = [
@@ -327,14 +332,14 @@ const AdminDashboard = () => {
         title: {
           display: true,
           text: 'Execution Time (s)',
-          font: { size: 14 }, // Improved readability
+          font: { size: 14 }, 
         },
       },
       x: {
         title: {
           display: true,
           text: 'Date',
-          font: { size: 14 }, // Improved readability
+          font: { size: 14 },
         },
       },
     },
@@ -375,7 +380,7 @@ const AdminDashboard = () => {
   const categoryChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    resizeDelay: 100, // Debounce resize updates
+    resizeDelay: 100,
     plugins: {
       legend: {
         position: 'top' as const,
@@ -512,7 +517,7 @@ const AdminDashboard = () => {
                         store={product.store}
                         price={product.price}
                         averageRating={product.average_rating}
-                        favoriteIds={favoriteIds} // Pass favoriteIds to ProductCard
+                        favoriteIds={favoriteIds}
                       />
                     ))
                   ) : (
@@ -539,12 +544,24 @@ const AdminDashboard = () => {
               </div>
             </section>
           </div>
+
+          {chartData && (
+            <div className="row">
+              <section className="dynamic-chart-section">
+                <h2>{chartData.options.plugins.title.text}</h2>
+                <div className="chart-container" style={{ position: 'relative', height: '450px', width: '450px' }}>
+                  <Pie data={chartData.data} options={chartData.options} />
+                </div>
+              </section>
+            </div>
+          )}
         </div>
 
         <ChatBubble 
           onClick={toggleChat} 
           isOpen={showChat} 
           onReportGenerate={handleReportGenerate} 
+          onChartData={handleChartData} 
         />
       </div>
     </div>

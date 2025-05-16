@@ -163,7 +163,7 @@ class AdminHandlers:
         role = args.get("role")
         time.sleep(1)
 
-        response_text = f"Generating User Activity Report with parameters: Start Date: {start_date }, End Date: {end_date}, Role: {role or 'All'}"
+        response_text = f"Generating User Activity Report with parameters: Start Date: {start_date}, End Date: {end_date}, Role: {role or 'All'}"
         
         additional_data = {
             "report_type": "user_activity",
@@ -206,7 +206,102 @@ class AdminHandlers:
             }
         }
         
+        return json.dumps({
+            "response_text": response_text,
+            "additional_data": additional_data
+        })
+
+    @staticmethod
+    def handle_generate_chart(args):
+        chart_type = args.get("chart_type")
+        data_source = args.get("data_source")
+        x_axis = args.get("x_axis")
+        y_axis = args.get("y_axis")
+        title = args.get("title")
+        data = args.get("data")
+
+        time.sleep(1)
+
+
+        if not all([chart_type, data_source, x_axis, y_axis, title, data]):
+            return json.dumps({"error": "All parameters (chart_type, data_source, x_axis, y_axis, title, data) are required"})
+
+        if not isinstance(data, dict) or "labels" not in data or "values" not in data:
+            return json.dumps({"error": "The 'data' parameter must be an object with 'labels' and 'values' arrays"})
         
+        labels = data.get("labels", [])
+        values = data.get("values", [])
+        
+        if not isinstance(labels, list) or not isinstance(values, list):
+            return json.dumps({"error": "'labels' and 'values' must be arrays"})
+        
+        if len(labels) != len(values) or not labels:
+            return json.dumps({"error": "'labels' and 'values' arrays must be non-empty and have the same length"})
+
+        background_colors = []
+        border_colors = []
+        default_colors = [
+            "rgba(75, 192, 192, 0.2)",  
+            "rgba(255, 99, 132, 0.2)",  
+            "rgba(54, 162, 235, 0.2)",  
+            "rgba(255, 206, 86, 0.2)",  
+            "rgba(153, 102, 255, 0.2)"  
+        ]
+        default_border_colors = [
+            "rgba(75, 192, 192, 1)",
+            "rgba(255, 99, 132, 1)",
+            "rgba(54, 162, 235, 1)",
+            "rgba(255, 206, 86, 1)",
+            "rgba(153, 102, 255, 1)"
+        ]
+
+        for i in range(len(labels)):
+            background_colors.append(default_colors[i % len(default_colors)])
+            border_colors.append(default_border_colors[i % len(default_border_colors)])
+
+        options = {
+            "responsive": True,
+            "plugins": {
+                "legend": {"position": "top"},
+                "title": {
+                    "display": True,
+                    "text": title
+                }
+            }
+        }
+
+        if chart_type not in ["pie", "doughnut"]:
+            options["scales"] = {
+                "y": {
+                    "beginAtZero": True,
+                    "title": {"display": True, "text": y_axis}
+                },
+                "x": {
+                    "title": {"display": True, "text": x_axis}
+                }
+            }
+
+        response_text = f"Preparing Chart.js {chart_type} chart for {data_source} data with title: {title}"
+
+        additional_data = {
+            "chart_type": chart_type,
+            "data_source": data_source,
+            "chart_config": {
+                "type": chart_type,
+                "data": {
+                    "labels": labels,
+                    "datasets": [{
+                        "label": y_axis,
+                        "data": values,
+                        "backgroundColor": background_colors,
+                        "borderColor": border_colors,
+                        "borderWidth": 1
+                    }]
+                },
+                "options": options
+            }
+        }
+
         return json.dumps({
             "response_text": response_text,
             "additional_data": additional_data

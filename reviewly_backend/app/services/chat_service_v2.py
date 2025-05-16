@@ -42,7 +42,7 @@ class ChatService:
         if self.is_admin:
             self.messages = [{
                 "role": "system",
-                "content": f"You are an admin assistant for an online store. Today's date is {current_date}. You can manage user information, generate reports, answer questions about products, provide recommendations, and assist with store operations. Never show images in your responses."
+                "content": f"You are an admin assistant for an online store. Today's date is {current_date}. You can manage user information, generate reports, answer questions about products, provide recommendations, assist with store operations, and generate charts for data visualization. Never show images in your responses."
             }]
         else:
             self.messages = [{
@@ -72,7 +72,8 @@ class ChatService:
                 "set_user_role": AdminHandlers.handle_set_user_role,
                 "delete_user": AdminHandlers.handle_delete_user,
                 "generate_user_activity_report": AdminHandlers.handle_generate_user_activity_report,
-                "generate_product_popularity_report": AdminHandlers.handle_generate_product_popularity_report
+                "generate_product_popularity_report": AdminHandlers.handle_generate_product_popularity_report,
+                "generate_chart": AdminHandlers.handle_generate_chart
             })
 
     def ask_question(self, prompt=None, product_id=None, model="openai/gpt-4o-mini"):
@@ -225,7 +226,59 @@ class ChatService:
                             "required": []
                         }
                     }
+                },
+              {
+                "type": "function",
+                "function": {
+                    "name": "generate_chart",
+                    "description": "Generate a Chart.js chart for data visualization (admin only). Requires pre-aggregated data (labels and values) from previous function calls (e.g., get_users or search_product). The chatbot must process the data into the required format before calling this function. Do not call get_users, generate_user_activity_report, or generate_product_popularity_report directly to obtain data.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "chart_type": {
+                                "type": "string",
+                                "description": "Type of chart to generate",
+                                "enum": ["bar", "line", "pie", "doughnut"]
+                            },
+                            "data_source": {
+                                "type": "string",
+                                "description": "Source of the data (e.g., 'users', 'products')",
+                                "enum": ["users", "products"]
+                            },
+                            "x_axis": {
+                                "type": "string",
+                                "description": "Field for x-axis or labels (e.g., 'role', 'category'). For pie/doughnut charts, this represents the label field."
+                            },
+                            "y_axis": {
+                                "type": "string",
+                                "description": "Field for y-axis or values (e.g., 'count', 'price'). For pie/doughnut charts, this represents the value field."
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Title of the chart"
+                            },
+                            "data": {
+                                "type": "object",
+                                "description": "Pre-aggregated data for the chart, containing labels and values",
+                                "properties": {
+                                    "labels": {
+                                        "type": "array",
+                                        "description": "Array of labels for the chart (e.g., ['user', 'admin'] for user roles)",
+                                        "items": {"type": "string"}
+                                    },
+                                    "values": {
+                                        "type": "array",
+                                        "description": "Array of values corresponding to the labels (e.g., [3, 2] for user/admin counts)",
+                                        "items": {"type": "number"}
+                                    }
+                                },
+                                "required": ["labels", "values"]
+                            }
+                        },
+                        "required": ["chart_type", "data_source", "x_axis", "y_axis", "title", "data"]
+                    }
                 }
+            }
             ])
 
         if not product_id:
@@ -301,7 +354,8 @@ class ChatService:
                                             "set_user_role": "Updating user role",
                                             "delete_user": "Deleting user",
                                             "generate_user_activity_report": "Generating user activity report",
-                                            "generate_product_popularity_report": "Generating product popularity report"
+                                            "generate_product_popularity_report": "Generating product popularity report",
+                                            "generate_chart": "Generating chart data"
                                         }
                                         status_msg = status_messages.get(function_name, f"Executing function {function_name}")
                                         yield json.dumps({

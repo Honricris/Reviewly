@@ -116,6 +116,7 @@
 .chart-section,
 .most-favorited-section,
 .category-chart-section {
+  z-index: 4;
   background: #ffffff;
   border-radius: 8px;
   border: 1px solid #dadce0;
@@ -355,4 +356,36 @@
 
 .react-datepicker {
   z-index: 2000 !important;
+}
+
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 20px;
+}
+
+.admin-charts-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dynamic-chart-section {
+  z-index: 4;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #dadce0;
+  padding: 1.5rem;
+  justify-content: center;
+}
+
+.dynamic-chart-section h2 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #202124;
+  text-align: left;
+  margin-bottom: 1rem;
 }

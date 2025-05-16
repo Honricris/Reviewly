@@ -28,9 +28,10 @@ interface ChatBubbleProps {
   onResponse?: (botAnswer: any) => void; 
   onReportGenerate?: (reportType: string, parameters: any) => void;
   scrollToHighlightedReview?: (reviewId: number) => void;
+  onChartData?: (chartData: any) => void;
 }
 
-const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, onReportGenerate, scrollToHighlightedReview }) => {
+const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onResponse, onReportGenerate, scrollToHighlightedReview , onChartData,}) => {
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot'; text: string; time: string; reviewIds?: number[]; isStatus?: boolean}[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +58,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
 
   const sendMessage = async () => {
     if (!currentMessage.trim()) return;
-  
+
     const userMessage = {
       sender: 'user' as const,
       text: currentMessage,
@@ -66,28 +67,28 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
     setMessages((prev) => [...prev, userMessage]);
     setCurrentMessage('');
     setIsLoading(true);
-  
+
     try {
       const reader = await chatService.queryChat(currentMessage, productId);
       const decoder = new TextDecoder();
-  
-      let botMessage = { 
-        sender: 'bot' as const, 
-        text: '', 
+
+      let botMessage = {
+        sender: 'bot' as const,
+        text: '',
         time: new Date().toLocaleTimeString(),
         reviewIds: [] as number[],
         products: [] as any[],
-        isStatus: false
+        isStatus: false,
       };
-  
+
       setMessages((prev) => [...prev, botMessage]);
-  
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-  
+
         const chunk = decoder.decode(value, { stream: true });
-  
+
         if (chunk) {
           try {
             const parsedChunk = JSON.parse(chunk);
@@ -97,28 +98,31 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
                 if (onReportGenerate) {
                   onReportGenerate(report_type, parameters);
                 }
+              } else if (parsedChunk.data?.chart_config) {
+                if (onChartData) {
+                  onChartData(parsedChunk.data.chart_config);
+                }
               }
-              
+
               botMessage.reviewIds = parsedChunk.data.review_ids || [];
               botMessage.products = parsedChunk.data.products || [];
-            
+
               if (botMessage.products.length > 0 && onResponse) {
                 onResponse({ products: botMessage.products });
               } else if (botMessage.reviewIds.length > 0 && onResponse) {
                 onResponse({ reviews: botMessage.reviewIds });
               }
-            }else if (parsedChunk.type === 'status') {
+            } else if (parsedChunk.type === 'status') {
               const statusMessage = {
                 sender: 'bot' as const,
                 text: parsedChunk.message,
                 time: new Date().toLocaleTimeString(),
-                isStatus: true
+                isStatus: true,
               };
               setMessages((prev) => [...prev.slice(0, -1), statusMessage]);
-              setIsLoading(false); 
-
+              setIsLoading(false);
             } else {
-              setMessages((prev) => prev.filter(msg => !msg.isStatus));
+              setMessages((prev) => prev.filter((msg) => !msg.isStatus));
               botMessage.text += chunk;
               setMessages((prev) => [...prev.slice(0, -1), { ...botMessage }]);
             }
@@ -128,12 +132,16 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ onClick, isOpen, productId, onR
           }
         }
       }
-  
     } catch (error) {
-      console.error("Error in sendMessage:", error);
+      console.error('Error in sendMessage:', error);
       setMessages((prev) => [
         ...prev,
-        { sender: 'bot', text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, time: new Date().toLocaleTimeString(), reviewIds: [] }
+        {
+          sender: 'bot',
+          text: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          time: new Date().toLocaleTimeString(),
+          reviewIds: [],
+        },
       ]);
     } finally {
       setIsLoading(false);
