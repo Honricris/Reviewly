@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/authService';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import PasswordHelper from '../components/PasswordHelper'; 
+import PasswordHelper from '../components/PasswordHelper';
 import { useAuth } from '../context/AuthContext';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { GithubLoginButton, GoogleLoginButton } from 'react-social-login-buttons';
@@ -16,6 +16,8 @@ const Register = () => {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false); 
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -77,6 +79,11 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!acceptPrivacy) {
+      setError('You must accept the privacy policy to register.');
+      return;
+    }
+
     if (!validateEmail(email)) {
       setError('Please enter a valid email address.');
       return;
@@ -99,12 +106,12 @@ const Register = () => {
 
       const userData = login(response.access_token);
       navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
-    }  catch (err) {
+    } catch (err) {
       console.error('Error during registration:', err);
-  
+
       if (err.response) {
         console.error('Response data:', err.response.data);
-  
+
         if (err.response.status === 409) {
           const errorMessage = err.response.data.message || 'User with that email already exists.';
           setError(errorMessage);
@@ -118,12 +125,17 @@ const Register = () => {
   };
 
   const handleGoogleLoginSuccess = async (credentialResponse) => {
+    if (!acceptPrivacy) {
+      setError('You must accept the privacy policy to register.');
+      return;
+    }
+
     try {
       const response = await AuthService.googleAuth({ token: credentialResponse.credential });
       console.log('Google authentication successful:', response);
 
       const userData = login(response.access_token);
-        navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
+      navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
     } catch (err) {
       setError('Error during Google authentication. Please try again.');
     }
@@ -134,11 +146,21 @@ const Register = () => {
   };
 
   const handleGitHubLogin = () => {
+    if (!acceptPrivacy) {
+      setError('You must accept the privacy policy to register.');
+      return;
+    }
+
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${import.meta.env.VITE_GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent('http://localhost:5173/register')}&scope=user:email`;
     window.location.href = githubAuthUrl;
-};
+  };
 
   const handleGitHubCallback = async (code) => {
+    if (!acceptPrivacy) {
+      setError('You must accept the privacy policy to register.');
+      return;
+    }
+
     try {
       const response = await AuthService.githubAuth({ code });
       console.log('GitHub authentication successful:', response);
@@ -217,6 +239,27 @@ const Register = () => {
           </span>
         </div>
 
+        {/* Privacy Policy Checkbox */}
+        <div className="flex-row" style={{ marginTop: '10px', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            id="acceptPrivacy"
+            checked={acceptPrivacy}
+            onChange={(e) => setAcceptPrivacy(e.target.checked)}
+            style={{ marginRight: '10px' }}
+          />
+          <label htmlFor="acceptPrivacy" style={{ fontSize: '14px', color: '#151717' }}>
+            I accept the{' '}
+            <span
+              className="span"
+              onClick={() => setShowPrivacyModal(true)}
+              style={{ cursor: 'pointer' }}
+            >
+              Privacy Policy
+            </span>
+          </label>
+        </div>
+
         {error && (
           <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>
             {error}
@@ -237,16 +280,73 @@ const Register = () => {
             onSuccess={handleGoogleLoginSuccess}
             onError={handleGoogleLoginError}
           />
-          <GithubLoginButton onClick={handleGitHubLogin} 
-          style={{ height: '40px' }}  />
+          <GithubLoginButton
+            onClick={handleGitHubLogin}
+            style={{ height: '40px' }}
+          />
         </div>
       </form>
-        
-      <PasswordHelper onGeneratePassword={() => {
-        const randomPassword = generateRandomPassword();
-        setPassword(randomPassword);
-        setConfirmPassword(randomPassword);
-      }} />
+
+      {/* Privacy Policy Modal */}
+      {showPrivacyModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Privacy Policy</h2>
+            <div className="modal-body">
+              <p>
+                <strong>1. Responsible Party</strong><br />
+                Reviewly, located at C/Ruby León 24007, is responsible for processing your personal data.
+              </p>
+              <p>
+                <strong>2. Data Collected</strong><br />
+                We collect: email address, GitHub ID, IP address, login timestamps, and search queries you submit.
+              </p>
+              <p>
+                <strong>3. Purpose</strong><br />
+                Your data is used to manage your account, provide our services, ensure security, and improve our platform.
+              </p>
+              <p>
+                <strong>4. Legal Basis</strong><br />
+                We process your data based on your consent and the need to fulfill our contract with you.
+              </p>
+              <p>
+                <strong>5. Data Retention</strong><br />
+                We keep your data only as long as necessary for the purposes described or as required by law.
+              </p>
+              <p>
+                <strong>6. Data Sharing</strong><br />
+                We may share your data with third-party services (e.g., Google, GitHub) for authentication. These parties are GDPR-compliant.
+              </p>
+              <p>
+                <strong>7. Your Rights</strong><br />
+                You have the right to access, rectify, delete, restrict, or port your data. Contact us at email@example.com to exercise these rights.
+              </p>
+              <p>
+                <strong>8. Security</strong><br />
+                We use encryption and other measures to protect your data.
+              </p>
+              <p>
+                <strong>9. Contact</strong><br />
+                For questions, contact us at email@example.com.
+              </p>
+            </div>
+            <button
+              className="modal-close-button"
+              onClick={() => setShowPrivacyModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      <PasswordHelper
+        onGeneratePassword={() => {
+          const randomPassword = generateRandomPassword();
+          setPassword(randomPassword);
+          setConfirmPassword(randomPassword);
+        }}
+      />
     </div>
   );
 };

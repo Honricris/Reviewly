@@ -11,8 +11,8 @@ import 'leaflet.heat';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-fullscreen/dist/leaflet.fullscreen.css';
 import 'leaflet-fullscreen';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
-import { Line, Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Line, Pie, Bar } from 'react-chartjs-2';
 import Header from '../../components/Header';
 import ProductCard from '../../components/ProductCard';
 import DatePicker from 'react-datepicker';
@@ -20,7 +20,17 @@ import 'react-datepicker/dist/react-datepicker.css';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 interface HeatmapPoint {
   lat: number;
@@ -53,7 +63,7 @@ const AdminDashboard = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000));
   const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
-  const [chartData, setChartData] = useState<any | null>(null); // New state for chart data
+  const [chartData, setChartData] = useState<{ id: string; chartType: string; data: any; options: any }[]>([]);  
   const mapRef = useRef<L.Map | null>(null);
   const heatLayerRef = useRef<L.HeatLayer | null>(null);
   const navigate = useNavigate();
@@ -227,7 +237,32 @@ const AdminDashboard = () => {
   };
 
   const handleChartData = (chartConfig: any) => {
-    setChartData(chartConfig);
+    const newChart = {
+      id: Date.now().toString(),
+      chartType: chartConfig.type || 'pie', 
+      data: chartConfig.data,
+      options: chartConfig.options,
+    };
+    setChartData((prev) => [...prev, newChart]);
+  };
+
+  const renderChart = (chart: { chartType: string; data: any; options: any }) => {
+    switch (chart.chartType) {
+      case 'bar':
+        return <Bar data={chart.data} options={chart.options} />;
+      case 'line':
+        return <Line data={chart.data} options={chart.options} />;
+      case 'pie':
+        return <Pie data={chart.data} options={chart.options} />;
+      case 'doughnut':
+        return <Pie data={chart.data} options={chart.options} />; // Doughnut uses Pie component in react-chartjs-2
+      default:
+        return <Pie data={chart.data} options={chart.options} />; // Fallback to Pie
+    }
+  };
+
+  const removeChart = (id: string) => {
+    setChartData((prev) => prev.filter((chart) => chart.id !== id));
   };
 
   const stats = [
@@ -545,14 +580,25 @@ const AdminDashboard = () => {
             </section>
           </div>
 
-          {chartData && (
+          {chartData.length > 0 && (
             <div className="row">
-              <section className="dynamic-chart-section">
-                <h2>{chartData.options.plugins.title.text}</h2>
-                <div className="chart-container" style={{ position: 'relative', height: '450px', width: '450px' }}>
-                  <Pie data={chartData.data} options={chartData.options} />
-                </div>
-              </section>
+              {chartData.map((chart) => (
+                <section key={chart.id} className="dynamic-chart-section">
+                  <div className="chart-header">
+                    <h2>{chart.options.plugins.title.text}</h2>
+                    <button
+                      className="close-chart-button"
+                      onClick={() => removeChart(chart.id)}
+                      aria-label="Close chart"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="chart-container" style={{ position: 'relative', height: '450px', width: '450px' }}>
+                    {renderChart(chart)}
+                  </div>
+                </section>
+              ))}
             </div>
           )}
         </div>

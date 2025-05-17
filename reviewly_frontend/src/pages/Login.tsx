@@ -135,10 +135,6 @@ const Login = () => {
         )}
 
         <div className="flex-row">
-          <div>
-            <input type="radio" />
-            <label>Remember me</label>
-          </div>
           <span className="span">Forgot password?</span>
         </div>
         <button type="submit" className="button-submit">Sign In</button>

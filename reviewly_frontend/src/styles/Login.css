@@ -284,3 +284,90 @@
   .password-toggle:hover {
     color: #2d79f3;
   }
+
+
+  /* Checkbox Styling */
+input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #2d79f3; /* Matches the theme color */
+  transition: transform 0.2s ease-in-out;
+}
+
+input[type="checkbox"]:hover {
+  transform: scale(1.1);
+}
+
+/* Modal Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  position: relative;
+  transition: transform 0.3s ease-in-out;
+}
+
+.modal-content h2 {
+  font-size: 20px;
+  color: #151717;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.modal-body {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.modal-body p {
+  margin-bottom: 10px;
+}
+
+.modal-body strong {
+  color: #151717;
+}
+
+.modal-close-button {
+  margin-top: 20px;
+  background-color: #2d79f3;
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 10px;
+  height: 40px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.modal-close-button:hover {
+  background-color: #1a5bbf;
+  transform: scale(1.02);
+}
+
+.modal-close-button:active {
+  transform: scale(0.98);
+}

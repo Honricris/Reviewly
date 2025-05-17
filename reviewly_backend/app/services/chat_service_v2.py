@@ -42,7 +42,7 @@ class ChatService:
         if self.is_admin:
             self.messages = [{
                 "role": "system",
-                "content": f"You are an admin assistant for an online store. Today's date is {current_date}. You can manage user information, generate reports, answer questions about products, provide recommendations, assist with store operations, and generate charts for data visualization. Never show images in your responses."
+                "content": f"You are an admin assistant for an online store. Today's date is {current_date}. You can manage user information, generate reports, answer questions about products, provide recommendations, assist with store operations, and generate charts for data visualization. Never show images in your responses.  Do not call get_users, generate_user_activity_report, or generate_product_popularity_report directly to obtain data for charts since they only MUST be used to generate when the user asks for a report."
             }]
         else:
             self.messages = [{
@@ -195,7 +195,7 @@ class ChatService:
                     "type": "function",
                     "function": {
                         "name": "generate_user_activity_report",
-                        "description": "Generate a user activity report with optional date range and role filters (admin only)",
+                        "description": "Generate a user activity report with optional date range and role filters (admin only). Do not call this function to generate data for charts since it does not return data it only creates a pdf in the user end",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -211,7 +211,7 @@ class ChatService:
                     "type": "function",
                     "function": {
                         "name": "generate_product_popularity_report",
-                        "description": "Generate a product popularity report with optional filters (admin only)",
+                        "description": "Generate a product popularity report with optional filters (admin only). Do not call this function to generate data for charts since it does not return data it only creates a pdf in the user end",
                         "parameters": {
                             "type": "object",
                             "properties": {
