@@ -118,11 +118,14 @@ class QueryExecutionTimes(Resource):
 
             if start_time >= end_time:
                 return {"error": "start_time must be earlier than end_time"}, 400
+
+            end_time = end_time.replace(hour=23, minute=59, second=59, microsecond=999999)
+
             print(f"Iniciando get execution times - start_date: {start_time}, end_date: {end_time}")
 
-            queries = UserQuery.query.filter(UserQuery.created_at.between(start_time, end_time))\
-                                    .order_by(UserQuery.created_at.asc())\
-                                    .all()
+            queries = UserQuery.query.filter(
+                UserQuery.created_at.between(start_time, end_time)
+            ).order_by(UserQuery.created_at.asc()).all()
 
             return queries, 200
 

@@ -21,5 +21,6 @@ class User(db.Model):
 
 user_favorites = db.Table('user_favorites',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('product_id', db.Integer, db.ForeignKey('products.product_id'), primary_key=True)
+    db.Column('product_id', db.Integer, db.ForeignKey('products.product_id'), primary_key=True),
+    db.Column('created_at', db.DateTime, nullable=False, default=func.now())
 )

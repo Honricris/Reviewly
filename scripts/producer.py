@@ -222,7 +222,6 @@ def filter_and_send_products(jsonl_file, reviews_file, db_path):
                     parent_asin = product.get("parent_asin", hashlib.md5(product.get('title', '').encode()).hexdigest()[:10])
                     print(f"Producto actual: {parent_asin}, Último producto enviado: {last_parent_asin}")
                     
-                    # Skip products until we pass the last sent parent_asin
                     if skip_mode:
                         print(f"Modo skip activado. Comparando {parent_asin} con {last_parent_asin}")
                         if parent_asin == last_parent_asin:
