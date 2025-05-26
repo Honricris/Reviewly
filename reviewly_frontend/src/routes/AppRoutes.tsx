@@ -17,12 +17,8 @@ import { useAuth } from '../context/AuthContext';
 
 const AppRoutes = () => {
   const { user, isAdmin, isLoading } = useAuth();
-  const location = useLocation(); // Now safe, as AppRoutes is inside <Router>
+  const location = useLocation();
 
-  // Redirect admins to /admin/dashboard on any non-admin route
-  if (!isLoading && user && isAdmin() && !location.pathname.startsWith('/admin')) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
 
   const RootRedirect = () => {
     if (isLoading) {
