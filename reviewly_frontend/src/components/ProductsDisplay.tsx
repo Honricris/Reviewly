@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 import { Button, Stack } from '@mui/material';
 import { getProducts } from '../services/productService';
+import userService from '../services/userService';
 
 interface ProductsDisplayProps {
   title: string;
