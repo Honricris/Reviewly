@@ -25,7 +25,6 @@ check_required_env_vars()
 
 def create_app():
     app = Flask(__name__)
-     # Configuración de CORS
     CORS(
         app,
         origins="http://localhost:5173",  

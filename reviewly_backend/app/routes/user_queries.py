@@ -5,6 +5,7 @@ from app.models.user_query import UserQuery
 from app.models.user import User
 from app import db
 from datetime import datetime
+from app.utils.jwt_utils import admin_required
 
 api = Namespace('user', description='User related operations')
 
@@ -89,6 +90,7 @@ class UserQueries(Resource):
 @api.route('/count')
 class UserCount(Resource):
     @jwt_required()
+    @admin_required()
     @api.marshal_with(user_count_model)
     def get(self):
         """Get the total number of users"""
@@ -101,6 +103,8 @@ class UserCount(Resource):
 @api.route('/execution-times')
 class QueryExecutionTimes(Resource):
     @jwt_required()
+    @admin_required()
+
     @api.marshal_list_with(execution_time_model)
     def get(self):
         """Get execution times for user queries between two timestamps"""

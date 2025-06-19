@@ -4,6 +4,7 @@ from app import db
 from datetime import datetime, timedelta
 from app.services.heatmap_service import HeatmapService 
 from flask_jwt_extended import jwt_required
+from app.utils.jwt_utils import admin_required
 
 api = Namespace('heatmap', description='Heatmap related operations')
 
@@ -16,6 +17,7 @@ heatmap_filter_model = api.model('HeatmapFilter', {
 class HeatmapData(Resource):
     @api.expect(heatmap_filter_model, validate=False)
     @jwt_required()
+    @admin_required()
     def get(self):
         data = request.args
         start_date = data.get('start_date')

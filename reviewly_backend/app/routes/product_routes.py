@@ -9,6 +9,8 @@ from app.services.product_service import (
 )
 from app.services.review_service import get_reviews_by_product
 from datetime import datetime
+from app.utils.jwt_utils import admin_required
+
 
 api = Namespace('products', description='Product related operations')
 
@@ -110,6 +112,7 @@ class Product(Resource):
         return product, 200
 
     @jwt_required()
+    @admin_required()
     def delete(self, id):
         """Delete a product by ID"""
         success = delete_product(id)
@@ -253,6 +256,7 @@ most_favorited_model = api.model('MostFavorited', {
 class MostFavoritedProducts(Resource):
     @api.expect(most_favorited_input_model)
     @jwt_required()
+    @admin_required()
     @api.marshal_list_with(most_favorited_model)
     def post(self):
         """Gets the IDs of the most favorited products within a date range"""

@@ -18,7 +18,7 @@ print("Kafka consumer initialized successfully.")
 BASE_URL = 'http://localhost:5000/api/v0'
 PRODUCTS_ENDPOINT = f'{BASE_URL}/products/'
 REVIEWS_ENDPOINT = f'{BASE_URL}/reviews/'
-JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNyIsImVtYWlsIjoiaG9ucmljcmlzQGdtYWlsLmNvbSIsImdpdGh1Yl9pZCI6bnVsbCwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzQ3MTM0NTczfQ.3WlsTdLX2yMJx6_k82evoqM3w-2Ch6nrJ4O-vvWdXmE'  
+JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyN…jgwfQ.xDth2A7r-wzAh6doFn_zTL633SnWWBHnyEdGal7sUCc'  
 
 # Headers for API requests
 headers = {

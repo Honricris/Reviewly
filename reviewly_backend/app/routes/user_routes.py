@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import request
 from app.services.user_service import UserService
 from app.models.LoginLog import LoginLog
+from app.utils.jwt_utils import admin_required
 
 api = Namespace('user', description='User related operations')
 
@@ -82,6 +83,7 @@ class UserFavorites(Resource):
 @api.route('')
 class UserList(Resource):
     @jwt_required()
+    @admin_required()
     @api.marshal_list_with(user_model)
     def get(self):
         """List all users"""
@@ -135,6 +137,7 @@ class UserResource(Resource):
         return user
 
     @jwt_required()
+    @admin_required()
     def delete(self, user_id):
         """Delete a user"""
         success, message = UserService.delete_user(user_id)
