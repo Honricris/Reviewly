@@ -255,7 +255,7 @@ class MostFavoritedProducts(Resource):
     @jwt_required()
     @api.marshal_list_with(most_favorited_model)
     def post(self):
-        """Obtiene los IDs de los productos más guardados en favoritos en un rango de fechas"""
+        """Gets the IDs of the most favorited products within a date range"""
         data = request.json
         start_date = data.get('start_date')
         end_date = data.get('end_date')

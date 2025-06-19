@@ -437,7 +437,7 @@ const ProductsMenu: React.FC = () => {
             </div>
 
             {searchActive ? (
-              <div className="search-mode-container">
+              <div className={`search-mode-container ${showChat ? 'with-chat' : ''}`}>
                 <div className="search-input-container">
                   <SearchIcon className="search-icon" />
                   <input

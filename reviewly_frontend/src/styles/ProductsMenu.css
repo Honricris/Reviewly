@@ -5,6 +5,7 @@
   min-height: 100vh;
   background-color: #F0F0F0;
   overflow-y: auto;
+  box-sizing: border-box; 
 }
 
 
@@ -27,6 +28,7 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  padding: 0 4rem;
   margin: 2rem auto;
   max-width: 1400px;
   width: 100%;
@@ -163,11 +165,11 @@
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem 0;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* Más estrecho */
+  gap: 0.75rem; 
+  padding: 0.25rem 0; 
+  min-height: 500px ;
 }
-
 /* Responsive Design */
 @media (max-width: 1024px) {
   .products-content {
@@ -249,8 +251,16 @@
   max-width: 600px;
   margin: 20px auto;
   position: relative;
+  transition: width 0.3s ease; /* Agrega transición suave */
 }
 
+/* Cuando el chat está abierto */
+.search-mode-container.with-chat {
+  width: calc(100% - 420px);
+  max-width: calc(100% - 420px);
+  margin-left: 0;
+  margin-right: auto;
+}
 .search-input-container {
   position: relative;
   width: 100%;
@@ -373,6 +383,7 @@
 
 .loader-container {
   width: 100%;
+  min-height: 100px;
   display: flex;
   justify-content: center;
   padding: 20px 0;

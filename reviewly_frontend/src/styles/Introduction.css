@@ -2,115 +2,114 @@
 
 /* General Styles */
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-    color: #333;
-  }
-  
-  .intro-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  /* Banner Section */
-  .banner {
-    background: linear-gradient(135deg, #ffcd38, #ffb703);
-    color: white;
-    padding: 60px 20px;
-    text-align: center;
-    width: 100%;
-  }
-  
-  .banner-content {
-    max-width: 800px;
-    margin: 0 auto;
-  }
-  
-  .banner-title {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-    animation: fadeIn 1s ease-in-out;
-  }
-  
-  .banner-description {
-    font-size: 1.2rem;
-    line-height: 1.6;
-    margin-bottom: 30px;
-    animation: fadeIn 1.5s ease-in-out;
-  }
-  
-  .try-button {
-    background-color: #ffcd38;
-    color: #333;
-    padding: 15px 30px;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: transform 0.3s ease, background-color 0.3s ease;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4fa; /* Tonalidad suave basada en lavender */
+  color: #333;
+}
 
+.intro-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Banner Section */
+.banner {
+  background: linear-gradient(135deg, #E6E6FA, #dcdcff); /* lavanda degradado */
+  color: #333;
+  padding: 60px 20px;
+  text-align: center;
+  width: 100%;
+}
+
+.banner-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.banner-title {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.banner-description {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+.try-button {
+  background-color: #cbcbe9; /* tono suave lavanda */
+  color: #333;
+  padding: 15px 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  border: none;
+}
+
+.try-button:hover {
+  background-color: #b3b3da;
+  transform: scale(1.05);
+}
+
+/* Features Section */
+.features {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.features-title {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background: #ffffff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  border-radius: 8px;
+  text-align: left;
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  color: #6b5b95; /* tono púrpura elegante */
+  margin-bottom: 10px;
+}
+
+.feature-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  .try-button:hover {
-    background-color: #ffa500;
-    transform: scale(1.05);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* Features Section */
-  .features {
-    padding: 40px 20px;
-    text-align: center;
-  }
-  
-  .features-title {
-    font-size: 2rem;
-    margin-bottom: 30px;
-    animation: fadeIn 1s ease-in-out;
-  }
-  
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-    max-width: 1000px;
-    margin: 0 auto;
-  }
-  
-  .feature-card {
-    background: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    border-radius: 8px;
-    text-align: left;
-    transition: transform 0.3s ease;
-  }
-  
-  .feature-card:hover {
-    transform: translateY(-5px);
-  }
-  
-  .feature-title {
-    font-size: 1.5rem;
-    color: #ffcd38;
-    margin-bottom: 10px;
-  }
-  
-  .feature-description {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #666;
-  }
-  
-  /* Animations */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
+}

@@ -255,9 +255,9 @@ const AdminDashboard = () => {
       case 'pie':
         return <Pie data={chart.data} options={chart.options} />;
       case 'doughnut':
-        return <Pie data={chart.data} options={chart.options} />; // Doughnut uses Pie component in react-chartjs-2
+        return <Pie data={chart.data} options={chart.options} />; 
       default:
-        return <Pie data={chart.data} options={chart.options} />; // Fallback to Pie
+        return <Pie data={chart.data} options={chart.options} />; 
     }
   };
 

@@ -27,9 +27,8 @@ const AppRoutes = () => {
     if (user && isAdmin()) {
       return <Navigate to="/admin/dashboard" replace />;
     }
-    if (user) {
-      return <Navigate to="/products" replace />;
-    }
+
+    
     return <Splash />;
   };
 

@@ -50,7 +50,7 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
     const fetchProducts = async (page: number) => {
       if (category) {
         setLoading(true);
-        const response = await getProducts(page, 8, category);
+        const response = await getProducts(page, 7, category);
         setProductList(response.products);
         setTotalPages(response.total_pages);
         setLoading(false);
@@ -69,7 +69,7 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
     setCurrentPage(newPage);
     if (category) {
       setLoading(true);
-      getProducts(newPage, 8, category).then((response) => {
+      getProducts(newPage, 7, category).then((response) => {
         setProductList(response.products);
         setTotalPages(response.total_pages);
         setLoading(false);

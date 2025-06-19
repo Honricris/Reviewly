@@ -25,7 +25,7 @@ const useProductsMenu = () => {
 
   const fetchProductsByCategory = async (category: string) => {
     try {
-      const data = await getProducts(1, 8, category);
+      const data = await getProducts(1, 7, category);
       return data.products
     } catch (err: any) {
       setError(err.message || 'An error occurred while fetching products');
