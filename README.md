@@ -1,69 +1,39 @@
 # Reviewly
 
-## Descripción del proyecto
+## Abstract
 
-### El Problema
+Esta aplicación web integra un chatbot basado en inteligencia artificial generativa que transforma la experiencia de búsqueda, análisis y gestión en plataformas de comercio electrónico. Su diseño responde a tres objetivos principales: agilizar la exploración de productos para los consumidores, proporcionar un motor de búsqueda semántico avanzado y facilitar herramientas analíticas a los administradores.
 
-El proceso de compra en línea puede ser tedioso, ya que los usuarios deben navegar por múltiples productos, analizar reseñas y comparar características manualmente, lo que consume tiempo y puede generar confusión. Además, los motores de búsqueda tradicionales basados en palabras clave a menudo no comprenden la intención del usuario, resultando en recomendaciones poco relevantes. Por otro lado, los administradores de plataformas de comercio electrónico necesitan herramientas analíticas avanzadas para gestionar datos y tomar decisiones informadas.
+El núcleo de esta solución reside en la conversión tanto de las características de los productos como de las consultas de los usuarios a un mismo espacio semántico mediante representaciones vectoriales. Esto permite realizar búsquedas más precisas, priorizando la similitud conceptual sobre las coincidencias exactas de palabras. Así, cuando un usuario busca algo como “quiero un portátil ligero con buena batería”, el sistema evalúa la proximidad entre su intención y la descripción de los productos, devolviendo los resultados más relevantes.
 
-### ¿Qué hace la app?
+Además, este mismo enfoque vectorial se aplica a las reseñas de usuarios, lo que habilita el uso de técnicas como RAG (Retrieval-Augmented Generation). Al recibir una consulta, el chatbot puede recuperar opiniones cercanas semánticamente y utilizarlas para generar respuestas fundamentadas, ofreciendo resúmenes o comparativas basadas en experiencias reales.
 
-Reviewly es una aplicación web que transforma la experiencia de búsqueda y gestión en plataformas de comercio electrónico mediante un chatbot basado en inteligencia artificial generativa y técnicas avanzadas de recuperación de información. La aplicación combina búsqueda semántica, generación de respuestas contextuales y herramientas analíticas para usuarios y administradores. En su versión actual, la aplicación ofrece las siguientes funcionalidades:
+Para gestionar estas capacidades, el sistema utiliza Function Calling, una técnica que permite al modelo de lenguaje invocar funciones específicas del backend cuando detecta que la consulta lo requiere. Por ejemplo, puede activar funciones para generar reportes personalizados sobre comportamiento de usuarios, tendencias de búsqueda o rendimiento de productos, sin intervención manual. También es capaz de construir gráficos interactivos, facilitando así la toma de decisiones basada en datos.
 
-#### Búsqueda Conversacional de Productos
-- **Funcionalidad:** Los usuarios pueden realizar consultas en lenguaje natural y recibir resultados relevantes basados en la similitud semántica.
-- **Sistema:** Utiliza embeddings generados por stella_en_v5 y búsqueda vectorial en PostgreSQL con pgvector.
+En resumen, esta aplicación combina procesamiento del lenguaje natural, búsqueda semántica avanzada y generación contextualizada de respuestas mediante RAG y Function Calling. Esta arquitectura permite una experiencia conversacional fluida, adaptada tanto a consumidores como a administradores, superando las limitaciones de los motores de búsqueda tradicionales.
 
-#### Generación de Respuestas Contextuales con RAG
-- **Funcionalidad:** Chatbot que recupera reseñas relevantes y genera resúmenes/comparativas con RAG.
-- **Sistema:** Combina búsqueda vectorial con GPT-4o-mini (OpenRouter).
+---
 
-#### Herramientas Analíticas para Administradores
-- **Funcionalidad:** Consultas en lenguaje natural para generar reportes, gráficos, mapas de calor, eliminación de cuentas, etc.
-- **Sistema:** Function Calling con integración Flask y React.
+## ¿Qué problema resuelve?
 
-#### Gestión de Usuarios y Productos
-- **Funcionalidad:** Registro, login, favoritos, detalles de producto, gestión por roles.
-- **Sistema:** Autenticación con tokens, API protegida.
+El comercio electrónico moderno enfrenta dos retos principales: por un lado, los usuarios necesitan encontrar productos relevantes de forma rápida y precisa; por otro, los administradores de plataformas requieren herramientas de análisis y gestión efectivas. Los motores de búsqueda tradicionales basados en palabras clave suelen ser ineficientes, ya que no comprenden la intención real del usuario. Además, la navegación por reseñas es manual, extensa y poco sintetizada.
 
-#### Procesamiento de Datos en Tiempo Real
-- **Funcionalidad:** Ingesta y procesamiento continuo de reseñas y metadatos.
-- **Sistema:** Apache Kafka + Zookeeper + PostgreSQL.
+---
 
-#### Interfaz Intuitiva y Responsiva
-- **Funcionalidad:** Navegación clara, adaptable y profesional.
-- **Sistema:** React + React Router + Material UI.
+## ¿Qué hace la app?
 
-## Futuras características
+**Reviewly** transforma este proceso mediante un chatbot inteligente potenciado por IA generativa, que puede:
 
-### Análisis de Sentimientos de Reseñas
-- Clasificación de reseñas mediante PLN.
+- **Buscar productos** en lenguaje natural usando búsqueda semántica (RAG).
+- **Buscar y analizar reseñas** relacionadas con la intención del usuario (RAG).
+- **Generar respuestas contextuales, resúmenes y comparativas** basadas en experiencias reales.
+- **Ejecutar funciones administrativas mediante Function Calling**, incluyendo:
+  - Generación de gráficos.
+  - Generación de reportes en lenguaje natural.
+  - Consulta de rendimiento de productos.
+  - Análisis de usuarios y tendencias.
 
-### Generación de Etiquetas mediante Clustering
-- Clustering de embeddings para detectar temas clave.
-
-### Resúmenes de Reseñas
-- Generación de resúmenes automáticos.
-
-### Comparación de Productos
-- Consultas tipo: "Which is better, A or B?" → Comparación basada en reseñas y características.
-
-### Productos Destacados en una Categoría
-- Consultas tipo: "Top product in [category]" → Lista destacada.
-
-## Objetivos
-
-### Mejorar la Experiencia del Consumidor
-- ✅ Logrado mediante búsqueda semántica y chatbot con RAG.
-
-### Construir un Motor de Búsqueda Eficiente
-- ✅ Implementado con stella_en_v5 y pgvector.
-
-### Proveer Herramientas Analíticas para Administradores
-- ✅ Function Calling y generación de reportes en lenguaje natural.
-
-### Aprender Tecnologías Modernas
-- ✅ React, LLMs, pgvector, Kafka, Docker, etc.
+---
 
 ## Arquitectura del sistema
 
@@ -94,18 +64,27 @@ Reviewly es una aplicación web que transforma la experiencia de búsqueda y ges
 ### Despliegue
 - Docker + docker-compose
 
-## Arquitectura de IA: Implementación de RAG
+---
 
-1. Usuario envía consulta (frontend)
-2. Se convierte a embedding (backend)
-3. Búsqueda vectorial (pgvector)
-4. Reseñas se envian a GPT-4o-mini (OpenRouter)
-5. Respuesta generada y enviada al usuario
+## Arquitectura de IA: RAG
 
-## Despliegue con Docker
+1. El usuario envía una consulta (producto o reseña).
+2. La consulta se convierte a embedding.
+3. Se busca la información más relevante en la base de datos vectorial (pgvector).
+4. Se envía el contenido recuperado al modelo (GPT-4o-mini).
+5. El modelo genera una respuesta contextualizada con RAG.
+6. La respuesta se muestra al usuario.
 
-- Cada componente en un contenedor Docker
-- `docker-compose.yml` orquesta todos los servicios
+---
+
+## Arquitectura de Function Calling
+
+1. El usuario realiza una consulta en lenguaje natural.
+2. El modelo detecta que debe invocar una función del backend (ej. `generarGraficoVentas()`).
+3. El backend ejecuta la función y devuelve los datos.
+4. El modelo interpreta la respuesta y la presenta al usuario de forma comprensible.
+
+---
 
 ## Instrucciones de instalación y despliegue
 
@@ -131,5 +110,12 @@ OPENROUTER_API_URL=<tu_api_url_aqui>
 docker compose --env-file .env up
 ```
 
-Acceso: http://localhost:5173
+Acceso: [http://localhost:3000](http://localhost:3000)
 
+---
+
+## Documentación de la API
+
+Base URL: `/api/v0`
+
+(Se deben completar las rutas en este apartado...)
