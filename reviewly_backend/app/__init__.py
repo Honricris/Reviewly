@@ -15,7 +15,7 @@ db = SQLAlchemy()
 
 def check_required_env_vars():
     load_dotenv()  
-    required_env_vars = ['DATABASE_URL', 'EDEN_API_TOKEN', 'EDEN_API_URL']
+    required_env_vars = ['DATABASE_URL']
     missing_vars = [var for var in required_env_vars if not os.getenv(var)]
 
     if missing_vars:
