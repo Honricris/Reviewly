@@ -8,7 +8,7 @@ El núcleo de esta solución reside en la conversión tanto de las característi
 
 Además, este mismo enfoque vectorial se aplica a las reseñas de usuarios, lo que habilita el uso de técnicas como RAG (Retrieval-Augmented Generation). Al recibir una consulta, el chatbot puede recuperar opiniones cercanas semánticamente y utilizarlas para generar respuestas fundamentadas, ofreciendo resúmenes o comparativas basadas en experiencias reales.
 
-Para gestionar estas capacidades, el sistema utiliza Function Calling, una técnica que permite al modelo de lenguaje invocar funciones específicas del backend cuando detecta que la consulta lo requiere. Por ejemplo, puede activar funciones para generar reportes personalizados sobre comportamiento de usuarios, tendencias de búsqueda o rendimiento de productos, sin intervención manual. También es capaz de construir gráficos interactivos, facilitando así la toma de decisiones basada en datos.
+Para gestionar estas capacidades, el sistema utiliza Function Calling, una técnica que permite al modelo de lenguaje invocar funciones específicas del backend cuando detecta que la consulta lo requiere. Esto incluye no solo funciones administrativas, sino también operaciones como la búsqueda de productos y análisis de reseñas. También es capaz de construir gráficos interactivos, facilitando así la toma de decisiones basada en datos.
 
 En resumen, esta aplicación combina procesamiento del lenguaje natural, búsqueda semántica avanzada y generación contextualizada de respuestas mediante RAG y Function Calling. Esta arquitectura permite una experiencia conversacional fluida, adaptada tanto a consumidores como a administradores, superando las limitaciones de los motores de búsqueda tradicionales.
 
@@ -33,6 +33,8 @@ El comercio electrónico moderno enfrenta dos retos principales: por un lado, lo
   - Consulta de rendimiento de productos.
   - Análisis de usuarios y tendencias.
 
+Además, implementa un **motor de búsqueda semántico**, que prioriza la similitud conceptual entre consultas y productos.
+
 ---
 
 ## Arquitectura del sistema
@@ -46,7 +48,7 @@ El comercio electrónico moderno enfrenta dos retos principales: por un lado, lo
 - Endpoints protegidos + Swagger
 
 ### Origen de datos
-- Dataset Amazon Reviews'23
+- Dataset Amazon Reviews'23 (https://amazon-reviews-2023.github.io/)
 - Ingesta con Apache Kafka
 
 ### Almacenamiento
@@ -80,7 +82,7 @@ El comercio electrónico moderno enfrenta dos retos principales: por un lado, lo
 ## Arquitectura de Function Calling
 
 1. El usuario realiza una consulta en lenguaje natural.
-2. El modelo detecta que debe invocar una función del backend (ej. `generarGraficoVentas()`).
+2. El modelo detecta que debe invocar una función del backend (ej. `generarGraficoVentas()` o `buscarProducto()`).
 3. El backend ejecuta la función y devuelve los datos.
 4. El modelo interpreta la respuesta y la presenta al usuario de forma comprensible.
 
@@ -110,12 +112,14 @@ OPENROUTER_API_URL=<tu_api_url_aqui>
 docker compose --env-file .env up
 ```
 
-Acceso: [http://localhost:3000](http://localhost:3000)
+Acceso al frontend: [http://localhost:5173/](http://localhost:5173/)  
+Acceso al backend: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ---
 
 ## Documentación de la API
 
-Base URL: `/api/v0`
+La documentación de la API está disponible en la **ruta base del backend**:  
+[http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-(Se deben completar las rutas en este apartado...)
+Base URL de la API: `/api/v0`
