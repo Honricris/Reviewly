@@ -276,10 +276,12 @@ const Register = () => {
         <p className="p line">Or With</p>
 
         <div className="flex-row">
-          <GoogleLogin
-            onSuccess={handleGoogleLoginSuccess}
-            onError={handleGoogleLoginError}
-          />
+          <div className="w-100 p-1" style={{ height: '40px' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={handleGoogleLoginError}
+            />
+          </div>
           <GithubLoginButton
             onClick={handleGitHubLogin}
             style={{ height: '40px' }}

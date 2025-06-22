@@ -1,7 +1,7 @@
 import '../styles/Login.css'; 
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/authService';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {  GoogleLogin } from '@react-oauth/google';
 import { GithubLoginButton } from 'react-social-login-buttons';
@@ -12,17 +12,21 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const hasProcessedCode = useRef(false);
 
 
 
    useEffect(() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-  
-      if (code) {
-        handleGitHubCallback(code);
-      }
-    }, []);
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code && !hasProcessedCode.current) {
+      hasProcessedCode.current = true; 
+      handleGitHubCallback(code).finally(() => {
+        window.history.replaceState({}, document.title, '/login');
+      });
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +84,10 @@ const Login = () => {
       try {
         const response = await AuthService.githubAuth({ code });
         console.log('GitHub authentication successful:', response);
-  
         const userData = login(response.access_token);
         navigate(userData.role === 'admin' ? '/admin/dashboard' : '/products');
       } catch (err) {
+        console.error('GitHub callback error:', err);
         setError('Error during GitHub authentication. Please try again.');
       }
     };
