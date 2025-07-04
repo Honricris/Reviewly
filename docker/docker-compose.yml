@@ -35,7 +35,7 @@ services:
       - backend
     environment:
       VITE_API_BASE_URL: http://127.0.0.1:5000
-    command: ["sh", "-c", "while ! curl -s -o /dev/null -w '%{http_code}' http://backend:5000/health | grep -q '200'; do echo 'Waiting for backend...'; sleep 10; done; npm run dev -- --host"]
+    command: ["sh", "-c", "while ! curl -s -o /dev/null -w '%{http_code}' http://backend:5000/health/ | grep -q '200'; do echo 'Waiting for backend...'; sleep 10; done; npm run dev -- --host"]
 
 volumes:
   postgres_data:
