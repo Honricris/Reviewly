@@ -15,8 +15,6 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/Reviewly
-      EDEN_API_TOKEN: ${EDEN_API_TOKEN}
-      EDEN_API_URL: ${EDEN_API_URL}
     ports:
       - "5000:5000"  
     depends_on:
